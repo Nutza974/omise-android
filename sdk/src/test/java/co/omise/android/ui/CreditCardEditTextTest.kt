@@ -9,7 +9,6 @@ import org.robolectric.Robolectric.buildActivity
 
 @RunWith(AndroidJUnit4::class)
 class CreditCardEditTextTest {
-
     private val activityController = buildActivity(Activity::class.java)
     private val editText = CreditCardEditText(activityController.get())
 
@@ -39,9 +38,9 @@ class CreditCardEditTextTest {
 
     @Test
     fun typeCardNumber_maxCardNumberLength() {
-        "42424242424242424242424".forEach { editText.append(it.toString()) }
+        "4242424242424242424242424242".forEach { editText.append(it.toString()) }
 
-        assertEquals("4242 4242 4242 4242", editText.text.toString())
+        assertEquals("4242 4242 4242 4242 424", editText.text.toString())
     }
 
     @Test
@@ -54,6 +53,13 @@ class CreditCardEditTextTest {
     @Test
     fun validate_validAmexNumber() {
         "378282246310005".forEach { editText.append(it.toString()) }
+
+        assertEquals(Unit, editText.validate())
+    }
+
+    @Test
+    fun validate_validUnionPayNumber() {
+        "6242424242424242426".forEach { editText.append(it.toString()) }
 
         assertEquals(Unit, editText.validate())
     }

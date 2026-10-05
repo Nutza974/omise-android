@@ -14,23 +14,29 @@ object PaymentSetting {
             listOf(
                     R.string.payment_preference_zero_interest_installments_key,
                     R.string.payment_preference_credit_card_key,
-                    R.string.payment_preference_internet_banking_bay_key,
-                    R.string.payment_preference_internet_banking_bbl_key,
+
                     R.string.payment_preference_mobile_banking_bay_key,
                     R.string.payment_preference_mobile_banking_bbl_key,
                     R.string.payment_preference_mobile_banking_kbank_key,
                     R.string.payment_preference_mobile_banking_ktb_key,
                     R.string.payment_preference_mobile_banking_scb_key,
                     R.string.payment_preference_installment_bay_key,
+                    R.string.payment_preference_installment_bay_wlb_key,
                     R.string.payment_preference_installment_first_choice_key,
+                    R.string.payment_preference_installment_first_choice_wlb_key,
                     R.string.payment_preference_installment_bbl_key,
+                    R.string.payment_preference_installment_bbl_wlb_key,
                     R.string.payment_preference_installment_mbb_key,
                     R.string.payment_preference_installment_ktc_key,
+                    R.string.payment_preference_installment_ktc_wlb_key,
                     R.string.payment_preference_installment_kbank_key,
+                    R.string.payment_preference_installment_kbank_wlb_key,
                     R.string.payment_preference_installment_scb_key,
-                    R.string.payment_preference_installment_citi_key,
+                    R.string.payment_preference_installment_scb_wlb_key,
                     R.string.payment_preference_installment_ttb_key,
+                    R.string.payment_preference_installment_ttb_wlb_key,
                     R.string.payment_preference_installment_uob_key,
+                    R.string.payment_preference_installment_uob_wlb_key,
                     R.string.payment_preference_alipay_key,
                     R.string.payment_preference_alipay_cn_key,
                     R.string.payment_preference_alipay_hk_key,
@@ -40,13 +46,13 @@ object PaymentSetting {
                     R.string.payment_preference_fpx_key,
                     R.string.payment_preference_gcash_key,
                     R.string.payment_preference_kakaopay_key,
-                    R.string.payment_preference_mobile_banking_ocbc_pao_key,
+                    R.string.payment_preference_ocbc_digital_key,
                     R.string.payment_preference_paynow_key,
                     R.string.payment_preference_promptpay_key,
-                    R.string.payment_preference_points_citi_key,
                     R.string.payment_preference_rabbit_linepay_key,
                     R.string.payment_preference_touch_n_go_key,
                     R.string.payment_preference_truemoney_key,
+                    R.string.payment_preference_truemoney_jumpapp_key,
                     R.string.payment_preference_googlepay_key,
                     R.string.payment_preference_boost_key,
                     R.string.payment_preference_shopeepay_key,
@@ -56,10 +62,11 @@ object PaymentSetting {
                     R.string.payment_preference_grabpay_key,
                     R.string.payment_preference_paypay_key,
                     R.string.payment_preference_atome_key,
+                    R.string.payment_preference_wechat_pay_key
             )
-                    .map { context.getString(it) }
-                    .map { Pair(it, PreferenceManager.getDefaultSharedPreferences(context).getBoolean(it, false)) }
-                    .toMap()
+                    .map { context.getString(it) }.associateWith {
+                PreferenceManager.getDefaultSharedPreferences(context).getBoolean(it, false)
+            }
 
     @JvmStatic
     fun isUsedSpecificsPaymentMethods(context: Context): Boolean =
@@ -74,32 +81,38 @@ object PaymentSetting {
                 .toMap()
                 .map {
                     when (it.key) {
-                        context.getString(R.string.payment_preference_internet_banking_bay_key) -> SourceType.InternetBanking.Bay
-                        context.getString(R.string.payment_preference_internet_banking_bbl_key) -> SourceType.InternetBanking.Bbl
+
                         context.getString(R.string.payment_preference_alipay_key) -> SourceType.Alipay
                         context.getString(R.string.payment_preference_bill_payment_tesco_lotus_key) -> SourceType.BillPaymentTescoLotus
                         context.getString(R.string.payment_preference_mobile_banking_bay_key) -> SourceType.MobileBanking.Bay
                         context.getString(R.string.payment_preference_mobile_banking_bbl_key) -> SourceType.MobileBanking.Bbl
                         context.getString(R.string.payment_preference_mobile_banking_kbank_key) -> SourceType.MobileBanking.KBank
                         context.getString(R.string.payment_preference_mobile_banking_ktb_key) -> SourceType.MobileBanking.KTB
-                        context.getString(R.string.payment_preference_mobile_banking_ocbc_pao_key) -> SourceType.OcbcPao
+                        context.getString(R.string.payment_preference_ocbc_digital_key) -> SourceType.OcbcDigital
                         context.getString(R.string.payment_preference_mobile_banking_scb_key) -> SourceType.MobileBanking.Scb
                         context.getString(R.string.payment_preference_installment_bay_key) -> SourceType.Installment.Bay
+                        context.getString(R.string.payment_preference_installment_bay_wlb_key) -> SourceType.Installment.BayWlb
                         context.getString(R.string.payment_preference_installment_first_choice_key) -> SourceType.Installment.FirstChoice
+                        context.getString(R.string.payment_preference_installment_first_choice_wlb_key) -> SourceType.Installment.FirstChoiceWlb
                         context.getString(R.string.payment_preference_installment_bbl_key) -> SourceType.Installment.Bbl
+                        context.getString(R.string.payment_preference_installment_bbl_wlb_key) -> SourceType.Installment.BblWlb
                         context.getString(R.string.payment_preference_installment_mbb_key) -> SourceType.Installment.Mbb
                         context.getString(R.string.payment_preference_installment_ktc_key) -> SourceType.Installment.Ktc
+                        context.getString(R.string.payment_preference_installment_ktc_wlb_key) -> SourceType.Installment.KtcWlb
                         context.getString(R.string.payment_preference_installment_kbank_key) -> SourceType.Installment.KBank
+                        context.getString(R.string.payment_preference_installment_kbank_wlb_key) -> SourceType.Installment.KBankWlb
                         context.getString(R.string.payment_preference_installment_scb_key) -> SourceType.Installment.Scb
-                        context.getString(R.string.payment_preference_installment_citi_key) -> SourceType.Installment.Citi
+                        context.getString(R.string.payment_preference_installment_scb_wlb_key) -> SourceType.Installment.ScbWlb
                         context.getString(R.string.payment_preference_installment_ttb_key) -> SourceType.Installment.Ttb
+                        context.getString(R.string.payment_preference_installment_ttb_wlb_key) -> SourceType.Installment.TtbWlb
                         context.getString(R.string.payment_preference_installment_uob_key) -> SourceType.Installment.Uob
+                        context.getString(R.string.payment_preference_installment_uob_wlb_key) -> SourceType.Installment.UobWlb
                         context.getString(R.string.payment_preference_econtext_key) -> SourceType.Econtext
                         context.getString(R.string.payment_preference_fpx_key) -> SourceType.Fpx()
                         context.getString(R.string.payment_preference_paynow_key) -> SourceType.PayNow
                         context.getString(R.string.payment_preference_promptpay_key) -> SourceType.PromptPay
-                        context.getString(R.string.payment_preference_points_citi_key) -> SourceType.PointsCiti
                         context.getString(R.string.payment_preference_truemoney_key) -> SourceType.TrueMoney
+                        context.getString(R.string.payment_preference_truemoney_jumpapp_key) -> SourceType.TrueMoneyJumpApp
                         context.getString(R.string.payment_preference_alipay_hk_key) -> SourceType.AlipayHk
                         context.getString(R.string.payment_preference_alipay_cn_key) -> SourceType.AlipayCn
                         context.getString(R.string.payment_preference_dana_key) -> SourceType.Dana
@@ -115,6 +128,7 @@ object PaymentSetting {
                         context.getString(R.string.payment_preference_grabpay_key) -> SourceType.GrabPay()
                         context.getString(R.string.payment_preference_paypay_key) -> SourceType.PayPay
                         context.getString(R.string.payment_preference_atome_key) -> SourceType.Atome
+                        context.getString(R.string.payment_preference_wechat_pay_key) -> SourceType.WeChatPay
                         else -> null
                     }
                 }

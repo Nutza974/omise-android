@@ -1,31 +1,45 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-parcelize'
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
-apply plugin: 'kotlin-android-extensions'
+apply plugin: 'jacoco'
+apply plugin: 'org.sonarqube'
+apply plugin: 'org.jlleitschuh.gradle.ktlint'
 
 android {
-    compileSdkVersion compile_sdk_version
-    buildToolsVersion build_tools_version
-
+    buildFeatures {
+        buildConfig true
+        viewBinding true
+    }
     defaultConfig {
+        namespace 'co.omise.android'
         minSdkVersion min_sdk_version
         targetSdkVersion target_sdk_version
         versionCode omise_sdk_code_version
         versionName omise_sdk_version
+        compileSdk compile_sdk_version
         buildConfigField "int", "VERSION_CODE", "$omise_sdk_code_version"
         buildConfigField "String", "VERSION_NAME", "\"$omise_sdk_version\""
+        buildConfigField "String", "OMISE_PUBLIC_KEY", "\"${System.getenv("OMISE_PUBLIC_KEY") ?: ""}\""
+        buildConfigField "String", "GOOGLE_PAY_MERCHANT_ID", "\"${System.getenv("GOOGLE_PAY_MERCHANT_ID") ?: ""}\""
         testInstrumentationRunner "co.omise.android.OmiseTestRunner"
+        // Consumer proguard rules is set to avoid cluttering the consumer's pro-guard rules
+        // with rules specific to the SDK which may break the SDK if not added to the consumer's side
+        consumerProguardFiles 'proguard-rules.pro'
     }
 
     buildTypes {
+        debug {
+            testCoverageEnabled true
+        }
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
 
-    flavorDimensions "mode"
+    flavorDimensions += "mode"
     productFlavors {
         production {
             dimension "mode"
@@ -40,11 +54,10 @@ android {
         disable 'InvalidPackage' // okio
     }
 
-    androidExtensions {
-        experimental = true
-    }
-
     testOptions {
+        // It's required for Sonar
+        reportDir "${project.buildDir}/reports/coverage/androidTest/production/debug/connected"
+
         unitTests {
             animationsDisabled true
             returnDefaultValues true
@@ -53,26 +66,21 @@ android {
                 testLogging {
                     events 'passed', 'skipped', 'failed', 'standardOut', 'standardError'
                 }
+                jacoco {
+                    includeNoLocationClasses = true
+                    excludes = ['jdk.internal.*']
+                }
             }
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
-    }
-    android {
-        sourceSets {
-            String sharedTestDir = "$projectDir/src/sharedTest/java"
-            test {
-                java.srcDir sharedTestDir
-            }
-            androidTest {
-                java.srcDir sharedTestDir
-            }
-        }
+        jvmTarget = "11"
+        // issue with agp > 8 so we had to add this line https://github.com/Kotlin/kotlinx.serialization/issues/2145
+        freeCompilerArgs = ["-Xstring-concat=inline"]
     }
 }
 
@@ -92,7 +100,7 @@ publishing {
                 withXml {
                     def dependenciesNode = asNode().appendNode('dependencies')
                     configurations.implementation.allDependencies.each {
-                        if (it.group != null && (it.name != null || "unspecified".equals(it.name)) && it.version != null) {
+                        if (it.group != null && (it.name != null || "unspecified" == it.name) && it.version != null) {
                             def dependencyNode = dependenciesNode.appendNode('dependency')
                             dependencyNode.appendNode('groupId', it.group)
                             dependencyNode.appendNode('artifactId', it.name)
@@ -121,34 +129,15 @@ publishing {
             }
         }
     }
-    repositories {
-        maven {
-            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-            def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
-            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-
-            def ossrhUsername = System.getenv("SONATYPE_USERNAME")
-            def ossrhPassword = System.getenv("SONATYPE_PASSWORD")
-            credentials {
-                username ossrhUsername
-                password ossrhPassword
-            }
-        }
-    }
 }
 
 signing {
-    def signingKey = System.getenv("PGP_SIGNING_KEY")
-    def signingPassword = System.getenv("PGP_SIGNING_PASSWORD")
-    useInMemoryPgpKeys(signingKey, signingPassword)
+    useInMemoryPgpKeys(System.getenv("PGP_SIGNING_KEY"), System.getenv("PGP_SIGNING_PASSWORD"))
     sign publishing.publications.release
 }
 
 dependencies {
-//    implementation project(":3DS-ANDROID-SDK:threeds")
-    implementation("co.omise:threeds-android:$omise_threeds_sdk_version") {
-        exclude module: 'asm'
-    }
+    implementation "androidx.activity:activity-ktx:$activity_version"
     implementation "androidx.appcompat:appcompat:$appcompat_version"
     api "joda-time:joda-time:$joda_time_version"
     implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
@@ -163,6 +152,8 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
     implementation 'com.google.android.gms:play-services-wallet:19.1.0'
+    // Required by Netcetera, check https://3dss.netcetera.com/3dssdk/doc/2.10.0/android-error-handling error [1322]
+    implementation 'org.bouncycastle:bcprov-jdk15to18:1.79'
 
     debugImplementation("androidx.fragment:fragment-testing:$fragment_testing_version") {
         exclude group: 'androidx.test', module: 'core'
@@ -172,7 +163,7 @@ dependencies {
     testImplementation "junit:junit:$junit_version"
     testImplementation "org.robolectric:robolectric:$robolectric_version"
     testImplementation "androidx.test:rules:$test_version"
-    testImplementation "androidx.test:runner:$test_version"
+    testImplementation "androidx.test:runner:$test_runner_version"
     testImplementation "androidx.test.espresso:espresso-core:$espresso_version"
     testImplementation "androidx.test.espresso:espresso-intents:$espresso_version"
     testImplementation "androidx.test.espresso:espresso-contrib:$espresso_version"
@@ -180,25 +171,108 @@ dependencies {
     testImplementation "androidx.test.ext:junit:$junit_ext_version"
     testImplementation "androidx.annotation:annotation:$annotation_version"
     testImplementation "androidx.arch.core:core-testing:$arch_version"
-    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:$mockito_kotlin_version"
+    testImplementation "org.mockito.kotlin:mockito-kotlin:$mockito_kotlin_version"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version"
 
     androidTestImplementation "androidx.annotation:annotation:$annotation_version"
-    androidTestImplementation "com.google.guava:guava:$guava_version"
-    androidTestImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:$mockito_kotlin_version"
+    androidTestImplementation "org.mockito.kotlin:mockito-kotlin:$mockito_kotlin_version"
     androidTestImplementation "org.robolectric:annotations:$robolectric_version"
-    androidTestImplementation "org.mockito:mockito-android:$mockito_version"
+    androidTestImplementation "com.linkedin.dexmaker:dexmaker-mockito-inline:$dexmaker_mockito_inline_version"
+    androidTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version"
+    androidTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version"
+    androidTestImplementation "androidx.arch.core:core-testing:$arch_version"
     androidTestImplementation "androidx.test:rules:$test_version"
-    androidTestImplementation "androidx.test:runner:$test_version"
+    androidTestImplementation "androidx.test:runner:$test_runner_version"
     androidTestImplementation "androidx.test.espresso:espresso-core:$espresso_version"
     androidTestImplementation "androidx.test.espresso:espresso-intents:$espresso_version"
     androidTestImplementation "androidx.test.espresso:espresso-contrib:$espresso_version"
     androidTestImplementation "androidx.test.espresso:espresso-web:$espresso_version"
     androidTestImplementation "androidx.test.ext:junit:$junit_ext_version"
-    androidTestImplementation "com.github.tmurakami:dexopener:$dexopener_version"
-}
+    androidTestImplementation "androidx.test.uiautomator:uiautomator:$uiautomator_version"
 
+    // Netcetera 3SD SDK
+    implementation "org.slf4j:slf4j-api:1.7.36"
+    implementation "com.github.tony19:logback-android:1.3.0-3"
+    implementation("com.netcetera.nca-341-2.3ds-sdk.android:3ds-sdk:$netcetera_threeds_sdk_version")
+}
 repositories {
     mavenCentral()
     maven { url 'https://jitpack.io' }
+}
+// Unit and instrumented test
+tasks.create(name: 'jacocoTestReport', type: JacocoReport, dependsOn: ['testProductionDebugUnitTest', 'lint', 'createProductionDebugCoverageReport']) {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+
+    // Main source code
+    sourceDirectories.from = file("${project.projectDir}/src/main/java")
+    classDirectories.from = files(fileTree(
+            // Generated Kotlin classes
+            dir: "${project.buildDir}/tmp/kotlin-classes/productionDebug",
+            // Exclude generated code
+            excludes: [
+                    '**/R.class',
+                    '**/R$*.class',
+                    '**/BuildConfig.*',
+                    '**/Manifest*.*',
+                    '**/*Test*.*',
+                    'android/**/*.*'
+            ]
+    ))
+    executionData.from = fileTree(dir: project.buildDir, includes: [
+            // Execution data for unit tests
+            '**/*.exec',
+            // Execution data for instrumentation tests
+            '**/*.ec'
+    ])
+}
+// Unit tests only
+tasks.create(name: 'jacocoUnitTestReport', type: JacocoReport, dependsOn: ['compileProductionDebugAndroidTestJavaWithJavac','generateProductionDebugAndroidTestBuildConfig','checkProductionDebugAndroidTestAarMetadata','mergeProductionDebugAndroidTestResources','processProductionDebugAndroidTestManifest','testProductionDebugUnitTest', 'lint']) {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+
+    // Main source code
+    sourceDirectories.from = file("${project.projectDir}/src/main/java")
+    classDirectories.from = files(fileTree(
+            // Generated Kotlin classes
+            dir: "${project.buildDir}/tmp/kotlin-classes/productionDebug",
+            // Exclude generated code
+            excludes: [
+                    '**/R.class',
+                    '**/R$*.class',
+                    '**/BuildConfig.*',
+                    '**/Manifest*.*',
+                    '**/*Test*.*',
+                    'android/**/*.*'
+            ]
+    ))
+    executionData.from = fileTree(dir: project.buildDir, includes: [
+            // Execution data for unit tests
+            '**/*.exec',
+            // Execution data for instrumentation tests
+            // '**/*.ec' // Removed to exclude instrumentation tests
+    ])
+}
+
+sonar {
+    properties {
+        property 'sonar.host.url', 'https://sonarcloud.io'
+        property 'sonar.organization', 'omise'
+        property 'sonar.projectName', 'omise-android'
+        property 'sonar.projectKey', 'omise_omise-android'
+        property 'sonar.coverage.jacoco.xmlReportPaths', "${project.buildDir}/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
+        property 'sonar.junit.reportPaths', "${project.buildDir}/test-results/testProductionDebugUnitTest"
+        property 'sonar.androidLint.reportPaths', "${project.buildDir}/reports/lint-results-productionDebug.xml"
+    }
+
+    ktlint {
+        android = true
+        reporters {
+            reporter "checkstyle"
+        }
+    }
 }

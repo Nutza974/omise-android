@@ -5,45 +5,66 @@
 [![Android CI](https://github.com/omise/omise-android/workflows/Android%20CI/badge.svg)](https://github.com/omise/omise-android/actions)
 
 Omise is a payment service provider currently operating in Thailand. Omise provides a set of clean APIs
-that help merchants of any size accept credit cards online.
+that help merchants of any size accept cards online.
 
-Omise Android SDK provides Android bindings for the Omise [Token](https://www.omise.co/tokens-api)
-and [Source](https://www.omise.co/sources-api) API as well as components for entering credit card information.
+Omise Android SDK provides Android bindings for the Omise [Token](https://docs.omise.co/tokens-api)
+and [Source](https://docs.omise.co/sources-api) API and components for entering credit card information.
+
+## Security Warning
+
+**It is imperative that you use at least the minimum recommended SDK version of `4.3.1` for security reasons. Any version below this poses severe risks of security vulnerabilities, bugs, and unexpected behaviors, which can be detrimental to your application. To avoid these risks and ensure the best user experience, it is highly recommended that you upgrade to the latest supported SDK version. Omise strongly advises the use of version `5.0.0` for superior performance and top-notch security.**
 
 ## Requirements
 
-* Public key. [Register for an Omise account](https://dashboard.omise.co/signup) to obtain your API keys.
-* Android 5.0+ (API 21) target or higher.
-* Android Studio and Gradle build system.
+- Public key. [Register for an Omise account](https://dashboard.omise.co/signup) to obtain your API keys.
+- Android 5.0+ (API 21) target or higher.
+- Android Studio and Gradle build system.
 
-## Merchant Compliance
+## Merchant compliance
 
 **Card data should never transit through your server. We recommend that you follow our guide on how to safely
-[collect credit information](https://www.omise.co/collecting-card-information).**
+[collect credit information](https://docs.omise.co/collecting-card-information).**
 
-To be authorized to create tokens server-side you must have a currently valid PCI-DSS
+To be authorized to create tokens server-side, you must have a currently valid PCI-DSS
 Attestation of Compliance (AoC) delivered by a certified QSA Auditor.
 
-This SDK provides means to tokenize card data on end-user mobile phone without the data
+This SDK provides the means to tokenize card data on an end-user mobile phone without the data
 having to go through your server.
 
 ## Installation
 
-Add the following line to your project's build.gradle file inside the `dependencies`
+Add the following line to your project's `build.gradle` file inside the `dependencies`
 block:
 
 ```gradle
-implementation 'co.omise:omise-android:4.+'
+implementation 'co.omise:omise-android:4.3.1'
 ```
 
 ## Usage
 
-### Credit Card activity
+### Breaking changes in version `v5.0.0`
+
+- **UI Customization Overhaul**: Introducing a new theme-based UI customization approach. Previously customized UI configurations must be updated. This offers configurations for `DefaultTheme`, `DarkTheme`, and `MonoChromeTheme`. See `CheckoutActivity.kt` in the example app for a detailed implementation.
+- **Charge Authorization**: A new parameter named `EXTRA_THREE_DS_REQUESTOR_APP_URL` has been introduced and is required for charge authorization. Ensure this parameter is passed during the start of `AuthorizingPaymentActivity` to prevent errors.
+- **Automatic Initialization**: The function `initializeAuthoringPaymentConfig()` has been removed and is no longer needed. The SDK now handles initialization automatically. Removed functions:
+
+```kotlin
+val threeDSConfig = ThreeDSConfig.Builder()
+    .uiCustomization(uiCustomization)
+    .timeout(5)
+    .build()
+val authPaymentConfig = AuthorizingPaymentConfig.Builder()
+    .threeDSConfig(threeDSConfig)
+    .build()
+AuthorizingPaymentConfig.initialize(authPaymentConfig)
+```
+
+### Card activity
 
 The simplest way to use this SDK is to integrate the provided `CreditCardActivity`
 directly into your application. This activity contains a pre-made credit form and will
-automatically [tokenize credit card
-information](https://www.omise.co/security-best-practices) for you.
+automatically [tokenize card
+information](https://docs.omise.co/security-best-practices) for you.
 
 To use it, first declare the availability of the activity in your `AndroidManifest.xml`
 file as follows:
@@ -54,53 +75,77 @@ file as follows:
   android:theme="@style/OmiseTheme" />
 ```
 
-Then in your activity, declare the method that will start this activity as follows:
+Then, in your activity, declare the method that will start this activity. Launching the activity depends on which version of Android/AGP you are using. Here is a simple example using `registerForActivityResult`:
 
 ```kotlin
 private val OMISE_PKEY: String = "pkey_test_123"
 private val REQUEST_CC: Int = 100
 
-private fun showCreditCardForm() {
-    val intent = Intent(this, CreditCardActivity::class.java)
-    intent.putExtra(OmiseActivity.EXTRA_PKEY, OMISE_PKEY)
-    startActivityForResult(intent, REQUEST_CC)
+private lateinit var creditCardLauncher: ActivityResultLauncher<Intent>
+
+override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+
+    creditCardLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result: ActivityResult ->
+        handleActivityResult(
+            CREDIT_CARD_REQUEST_CODE,
+            result.resultCode,
+            result.data
+        )
+    }
+}
+
+private fun payByCreditCard() {
+    Intent(this, CreditCardActivity::class.java).run {
+        putExtra(OmiseActivity.EXTRA_PKEY, PUBLIC_KEY)
+        creditCardLauncher.launch(this)
+    }
 }
 ```
 
 Replace the string `pkey_test_123` with the public key obtained from your Omise dashboard.
+We discuss the `handleActivityResult` function in the following section.
 
 After the end-user completes entering credit card information, the activity result
-callback will be called, handle it like so:
+callback will be called; handle it as follows:
 
 ```kotlin
-override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    super.onActivityResult(requestCode, resultCode, data)
-    if (resultCode == RESULT_CANCELED) {
-        // handle the cancellation
-        return
-    }
+ private fun handleActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 
-    if (requestCode == REQUEST_CC) {
-        val token = data?.getParcelableExtra<Token>(EXTRA_TOKEN_OBJECT)
-        // process your token here
+    if (resultCode == RESULT_CANCELED) {
+        snackbar.setText(R.string.payment_cancelled).show()
+        return
     }
 }
 ```
 
-A number of results are returned from the activity. You can obtain them from the
+Unless you are working on a project with specific backward compatibility requirements,
+we recommend using `registerForActivityResult` to handle activity results in your Android apps.
+You can then attach a function to handle the activity result inside the `registerForActivityResult`.
+You do not need to set the `requestCode` explicitly in your handle function, but it is included here for simplicity.
+You can have a specific function for each `intent` that you launch, and that function will handle the particular
+result logic of that intent without the need for the request code.
+
+Several results are returned from the activity. You can obtain them from the
 resulting `Intent` with the following code:
 
-* `data.getStringExtra(OmiseActivity.EXTRA_TOKEN)` - The string ID of the token. Use
-  this if you only needs the ID and not   the card data.
-* `data.getParcelableExtra(OmiseActivity.EXTRA_TOKEN_OBJECT)` - The full `Token`
+- `data.getStringExtra(OmiseActivity.EXTRA_TOKEN)` - The string ID of the token. Use
+  this if you only need the ID and not the card data.
+- `data.getParcelableExtra(OmiseActivity.EXTRA_TOKEN_OBJECT)` - The full `Token`
   object returned from the Omise API.
-* `data.getParcelableExtra(OmiseActivity.EXTRA_CARD_OBJECT)` - The `Card` object
-  which is part of the `Token` object returned from the Omise API.
+- `data.getParcelableExtra(OmiseActivity.EXTRA_CARD_OBJECT)` - The `Card` object
+  that is part of the `Token` object returned from the Omise API.
 
-### Custom Credit Card Form
+The `getParcelableExtra(key)` function is deprecated and no longer recommended to be used. We advise you to
+create your custom function to retrieve the necessary information, as different Android versions may require you to
+account for backward compatibility.
 
-If you need to build your own credit card form, components inside `CreditCardActivity`
-can be used on their own. For example, the `CreditCardEditText` can be used in XML in this way:
+### Custom card form
+
+If you need to build your card form, components inside `CreditCardActivity`
+can be used on their own. For example, the `CreditCardEditText` can be used in XML as demonstrated:
 
 ```xml
 <co.omise.android.ui.CreditCardEditText
@@ -108,28 +153,28 @@ can be used on their own. For example, the `CreditCardEditText` can be used in X
   android:layout_height="wrap_content" />
 ```
 
-This component provides automatic spacing into groups of 4 digits as the user inputs their credit card number.
-Additionally the following utility classes are available from the SDK:
+This component provides automatic spacing into groups of 4 digits as the user inputs their card number.
+Additionally, the following utility classes are available from the SDK:
 
-* `co.omise.android.ui.CreditCardEditText` - The `CreditCardEditText` class provides utility
-   methods for validating and formatting credit card numbers.
-* `co.omise.android.ui.CardNameEditText` - The `CardNameEditText` class handles formatting and
-   input type for card holder name.
-* `co.omise.android.ui.ExpiryDateEditText` - The `ExpiryDateEditText` class handles formatting and
+- `co.omise.android.ui.CreditCardEditText` - The `CreditCardEditText` class provides utility
+  methods for validating and formatting credit card numbers.
+- `co.omise.android.ui.CardNameEditText` - The `CardNameEditText` class handles formatting and
+  input type for card holder name.
+- `co.omise.android.ui.ExpiryDateEditText` - The `ExpiryDateEditText` class handles formatting and
   date range limitation.
-* `co.omise.android.ui.SecurityCodeEditText` - The `SecurityCodeEditText` class handles formatting
-   and input type for security code.
+- `co.omise.android.ui.SecurityCodeEditText` - The `SecurityCodeEditText` class handles formatting
+  and input type for security code.
 
-### Manual Tokenization
+### Manual tokenization
 
-If you have built your own credit card or Google Pay form, you can use the SDK to manually tokenize the
-card. First build the `Client` and supply your public key this way:
+If you have built your card or Google Pay form, you can use the SDK to tokenize the
+card manually. First, build the `Client` and supply your public key as follows:
 
 ```kotlin
 private val client = Client("pkey_test_123")
 ```
 
-Then construct the token request with values from your custom form:
+Then, construct the token request with values from your custom form:
 
 ```kotlin
 // Sample builder for credit card
@@ -156,7 +201,7 @@ val tokenizationParam = TokenizationParam(
 val request = Token.CreateTokenRequestBuilder(tokenization = tokenizationParam).build()
 ```
 
-And then send the request using the `client` you have constructed earlier:
+Then send the request using the `client` that you have constructed earlier:
 
 ```kotlin
 client.send(request, object : RequestListener<Token>{
@@ -171,14 +216,15 @@ client.send(request, object : RequestListener<Token>{
 ```
 
 The `Client` class will automatically dispatch the network call on an internal background
-thread and will call listener methods on the thread that initially calls the `send`
+thread, and will call listener methods on the thread that initially calls the `send`
 method.
 
-### Payment Creator activity
-Another way to use the Omise Android SDK is to integrate the `PaymentCreatorActivity` 
+### Payment creator activity
+
+Another way to use the Omise Android SDK is to integrate the `PaymentCreatorActivity`
 to allow users to create a payment source from the list of sources available for the account.
 
-To use it, first declare the availability of the activity in your AndroidManifest.xml file as follows:
+To use it, first declare the availability of the activity in your `AndroidManifest.xml` file as follows:
 
 ```xml
 <activity
@@ -191,60 +237,97 @@ Then in your activity, declare the method that will start this activity as follo
 ```kotlin
 private val OMISE_PKEY: String = "pkey_test_123"
 private val REQUEST_CC: Int = 100
+private lateinit var paymentCreatorLauncher: ActivityResultLauncher<Intent>
+
+override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+
+    paymentCreatorLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result: ActivityResult ->
+        handleActivityResult(
+            PAYMENT_CREATOR_REQUEST_CODE,
+            result.resultCode,
+            result.data
+        )
+    }
+}
 
 private fun showPaymentCreatorActivity() {
-    val intent = Intent(this@CheckoutActivity, PaymentCreatorActivity::class.java)
-    intent.putExtra(OmiseActivity.EXTRA_PKEY, OMISE_PKEY)
-    intent.putExtra(OmiseActivity.EXTRA_AMOUNT, 150000L)
-    intent.putExtra(OmiseActivity.EXTRA_CURRENCY, "thb")
+    Intent(this, PaymentCreatorActivity::class.java).run {
+        putExtra(OmiseActivity.EXTRA_PKEY, PUBLIC_KEY)
+        putExtra(OmiseActivity.EXTRA_AMOUNT, 150000L)
+        putExtra(OmiseActivity.EXTRA_CURRENCY, "thb")
 
-    // you can retrieve your account's capabilities through the SDK (will be explained below)
-    intent.putExtra(OmiseActivity.EXTRA_CAPABILITY, capability)
+        // The SDk will automatically fetch your capabilities but you can use this EXTRA value to pass custom payment methods.
+        putExtra(OmiseActivity.EXTRA_CAPABILITY, capability)
 
-    startActivityForResult(intent, REQUEST_CC)
+        paymentCreatorLauncher.launch(this)
+    }
 }
 ```
 
 Replace the string `pkey_test_123` with the public key obtained from your Omise dashboard.
 
-Declare a `capability` variable as a `Capability` object and pass it as the value for the `OmiseActivity.EXTRA_CAPABILITY` key for your `Intent`. This way, the `PaymentCreatorActivity` will display the payment methods contained in the `Capability` object.  
+The SDK will automatically fetch your capabilities, but you can use this EXTRA value to pass custom payment methods.
 
-There are 2 options to retrieve the Capability object. 
+[optional] Declare a `capability` variable as a `Capability` object and pass it as the value for the `OmiseActivity.EXTRA_CAPABILITY` key for your `Intent.` This way, you can pass custom payment methods to the payment methods list. The displayed payment methods will only be those supported by your capabilities that the SDK automatically fetches.
 
-1. You can retrieve the Capability object from your account's capabilities through the [Capability](#retrieve-capabilities). 
+There are two options to retrieve the Capability object.
 
-2. Or you can create a `Capability` object to create your own capabilities using the helper function `Capability.create()`.  
+1. You can retrieve the Capability object from your account's capabilities through the [Retrieve Capabilities](#retrieve-capabilities) function.
 
-    **Here is the sample:**
+2. You can also create a `Capability` object to create your own capabilities using the helper function `Capability.create()`.
 
-    ```kotlin
-    val capability = Capability.create(
-            allowCreditCard = true,
-            sourceTypes = listOf(SourceType.PromptPay, SourceType.TrueMoney)
-    )
-    ```
+   **Here is the sample:**
 
-    > **Note**
-    > Ensure you are adding payment methods supported by the account. 
-    > If not, you won't be able to create a source to continue the payment process..
+   ```kotlin
+   val capability = Capability.create(
+           allowCreditCard = true,
+           sourceTypes = listOf(SourceType.PromptPay, SourceType.TrueMoney)
+   )
+   ```
+If you want to edit only the interest, you can create your capabilities as shown. When the SDK detects that you did not pass any payment methods, it will automatically use what is available.
+```java
+val capability = Capability.create(
+                allowCreditCard = false,
+                sourceTypes = listOf(),
+                zeroInterestInstallments = true, // or false
+            )
+```
+   > **Note**
+   > Ensure you are adding payment methods supported by the account.
+   > If non of the payment methods are supported by your account you will see an empty list.
 
 After the end user selects and creates a payment source, the activity result callback will be called; handle it as follows:
 
 ```kotlin
-override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    super.onActivityResult(requestCode, resultCode, data)
+private fun handleActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+
     if (resultCode == RESULT_CANCELED) {
-        // handle the cancellation
+        snackbar.setText(R.string.payment_cancelled).show()
         return
     }
 
-    if (requestCode == REQUEST_CC) {
-        if (data.hasExtra(OmiseActivity.EXTRA_SOURCE_OBJECT)) {
-            val source = data?.getParcelableExtra<Source>(OmiseActivity.EXTRA_SOURCE_OBJECT)
-            // process the source here
-        } else if (data.hasExtra(OmiseActivity.EXTRA_TOKEN)) {
-            val token = data?.getParcelableExtra<Token>(OmiseActivity.EXTRA_TOKEN_OBJECT)
-            // process the token here
+    when (requestCode) {
+        PAYMENT_CREATOR_REQUEST_CODE -> {
+            // if the payment method requires both source and token then you will receive both objects
+            // otherwise one object will be received
+            if(data.hasExtra(OmiseActivity.EXTRA_TOKEN) && data.hasExtra(OmiseActivity.EXTRA_SOURCE_OBJECT)){
+                val source = data.parcelable<Source>(OmiseActivity.EXTRA_SOURCE_OBJECT)
+                val token = data.parcelable<Token>(OmiseActivity.EXTRA_TOKEN_OBJECT)
+                snackbar.setText((source?.id ?: "No source object.") + "/" + (token?.id ?: "No token object.")).show()
+                Log.d(TAG, "source: ${source?.id}")
+                Log.d(TAG, "token: ${token?.id}")
+            } else if (data.hasExtra(OmiseActivity.EXTRA_SOURCE_OBJECT)) {
+                val source = data.parcelable<Source>(OmiseActivity.EXTRA_SOURCE_OBJECT)
+                snackbar.setText(source?.id ?: "No source object.").show()
+                Log.d(TAG, "source: ${source?.id}")
+            } else if (data.hasExtra(OmiseActivity.EXTRA_TOKEN)) {
+                val token = data.parcelable<Token>(OmiseActivity.EXTRA_TOKEN_OBJECT)
+                snackbar.setText(token?.id ?: "No token object.").show()
+                Log.d(TAG, "token: ${token?.id}")
+            }
         }
     }
 }
@@ -252,12 +335,12 @@ override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) 
 
 Two different results that could be returned are:
 
-* `data.hasExtra(OmiseActivity.EXTRA_SOURCE_OBJECT)` - The `Source` object created by the payment creator.
-* `data.hasExtra(OmiseActivity.EXTRA_TOKEN)` - The `Token` object created in case the payment source created was a credit card.
+- `data.hasExtra(OmiseActivity.EXTRA_SOURCE_OBJECT)` - The `Source` object created by the payment creator.
+- `data.hasExtra(OmiseActivity.EXTRA_TOKEN)` - The `Token` object created in case the payment source created was a card.
 
 ### Google Pay activity
 
-We support GooglePay as a tokenization method in our payment gateway. This activity contains a pre-made `Pay with Google Pay` button and will automatically [tokenize the Google Pay token](https://www.omise.co/security-best-practices) for you.
+We support GooglePay as a tokenization method in our payment gateway. This activity contains a pre-made `Pay with Google Pay` button and will automatically [tokenize the Google Pay token](https://docs.omise.co/security-best-practices) for you.
 
 To use it, first declare the availability of the activity in your `AndroidManifest.xml`
 file as follows:
@@ -291,47 +374,139 @@ override fun navigateToGooglePayForm() {
         putExtra(EXTRA_GOOGLEPAY_REQUEST_BILLING_ADDRESS, googlepayRequestBillingAddress)
         putEXTRA(EXTRA_GOOGLEPAY_REQUEST_PHONE_NUMBER, googlepayRequestPhoneNumber)
     }
-    activity.startActivityForResult(intent, REQUEST_GPAY)
+    gPayLauncher.launch(this)
 }
 ```
 
 - Replace the `OMISE_PKEY` with your Omise public key obtained from our dashboard.
-- Replace the `amount` with the amount you want to charge with, in subunits.
+- Replace the `amount` with the amount you want to charge in subunits.
 - Replace the `currency` with your currency in the ISO 4217 format.
-- Replace the `cardBrands` with the list from our [capability api](https://www.omise.co/capability-api) or leave blank to use default values.
+- Replace the `cardBrands` with the list from our [capability API](https://docs.omise.co/capability-api) or leave it blank to use default values.
 - Replace the `googlepayMerchantId` with your [Google Pay merchant ID](https://developers.google.com/pay/api/web/guides/setup) (not needed in test mode).
-- Set the `googlepayRequestBillingAddress` to `true` if you want to attach the cardholder's name and billing address to the token.
+- Set the `googlepayRequestBillingAddress` to `true` to attach the cardholder's name and billing address to the token.
 - When the cardholder's billing address is requested, set the `googlepayRequestPhoneNumber` to `true` to also attach the cardholder's phone number to the token.
 
 #### Return values
 
-A number of results are returned from the activity. You can obtain them from the
+Several results are returned from the activity. You can obtain them from the
 resulting `Intent` with the following code:
 
-* `data.getStringExtra(OmiseActivity.EXTRA_TOKEN)` - The string ID of the token. Use
+- `data.getStringExtra(OmiseActivity.EXTRA_TOKEN)` - The string ID of the token. Use
   this if you only need the ID and not the card data.
-* `data.getParcelableExtra(OmiseActivity.EXTRA_TOKEN_OBJECT)` - The full `Token`
+- `data.getParcelableExtra(OmiseActivity.EXTRA_TOKEN_OBJECT)` - The full `Token`
   object returned from the Omise API.
-* `data.getParcelableExtra(OmiseActivity.EXTRA_CARD_OBJECT)` - The `Card` object
-  which is part of the `Token` object returned from the Omise API.
+- `data.getParcelableExtra(OmiseActivity.EXTRA_CARD_OBJECT)` - The `Card` object
+  that is part of the `Token` object returned from the Omise API.
 
-#### Use your own activity
+#### Using your activity
 
-You can use your own activity if you prefer to. We recommend that you follow [Google's tutorial and guidelines](https://developers.google.com/pay/api/android/overview) and make sure
+You can use your activity if you prefer. We recommend that you follow [Google's tutorial and guidelines](https://developers.google.com/pay/api/android/overview) and make sure
 that you follow their [brand guidelines](https://developers.google.com/pay/api/android/guides/brand-guidelines) as well.
 
-You can make use of our Google Pay request builder `request/GooglePay.kt`, which will include request builders you can use to request the Google Pay token.
-Configurations to the builders are modifiable through the class' constructor to suit your needs. However, you are also welcome to make your own integration and call
+You can use our Google Pay request builder `request/GooglePay.kt`, which includes request builders that you can use to request the Google Pay token.
+Configurations for the builders are modifiable through the `class` constructor to suit your needs. However, you are also welcome to make your own integration and call
 our tokens builder yourself.
 
+# Passkey Integration
+
+The Omise Android SDK supports Passkey authentication for enhanced security and user experience. Passkey provides a passwordless authentication method that uses biometric authentication or device PINs, making payments more secure and convenient for users.
+
+## Prerequisites
+
+Before implementing Passkey authentication:
+- Ensure your Omise account supports Passkey authentication
+- Configure your backend to handle Passkey authentication flows
+
+## Implementation
+
+### Requesting Cardholder Data
+
+To use Passkey authentication, you must request cardholder data fields (email or phone number) during the payment process. This information is required for the backend Passkey authentication setup.
+
+#### Card Activity with Passkey
+
+When using the `CreditCardActivity`, you can request cardholder data by adding the `EXTRA_CARD_HOLDER_DATA` parameter:
+
+```kotlin
+private val CARD_HOLDER_DATA = CardHolderDataList(
+    arrayListOf(
+        CardHolderDataField.EMAIL,
+        CardHolderDataField.PHONE_NUMBER
+    )
+)
+
+private fun payByCreditCardWithPasskey() {
+    Intent(this, CreditCardActivity::class.java).run {
+        putExtra(OmiseActivity.EXTRA_PKEY, PUBLIC_KEY)
+        putExtra(OmiseActivity.EXTRA_CARD_HOLDER_DATA, CARD_HOLDER_DATA)
+        creditCardLauncher.launch(this)
+    }
+}
+```
+
+#### Payment Creator Activity with Passkey
+
+For the `PaymentCreatorActivity`, include the cardholder data parameter alongside your other payment configuration:
+
+```kotlin
+private val CARD_HOLDER_DATA = CardHolderDataList(
+    arrayListOf(
+        CardHolderDataField.EMAIL,
+        CardHolderDataField.PHONE_NUMBER
+    )
+)
+
+private fun showPaymentCreatorActivityWithPasskey() {
+    Intent(this, PaymentCreatorActivity::class.java).run {
+        putExtra(OmiseActivity.EXTRA_PKEY, PUBLIC_KEY)
+        putExtra(OmiseActivity.EXTRA_AMOUNT, 150000L)
+        putExtra(OmiseActivity.EXTRA_CURRENCY, "thb")
+        putExtra(OmiseActivity.EXTRA_CARD_HOLDER_DATA, CARD_HOLDER_DATA)
+        putExtra(OmiseActivity.EXTRA_CAPABILITY, capability)
+        paymentCreatorLauncher.launch(this)
+    }
+}
+```
+
+### Cardholder Data Fields
+
+The SDK supports the following cardholder data fields:
+
+- `CardHolderDataField.EMAIL` - Requests the customer's email address
+- `CardHolderDataField.PHONE_NUMBER` - Requests the customer's phone number
+
+You can request either one or both fields depending on your authentication requirements:
+
+```kotlin
+// Request only email
+private val CARD_HOLDER_DATA_EMAIL_ONLY = CardHolderDataList(
+    arrayListOf(CardHolderDataField.EMAIL)
+)
+
+// Request only phone number
+private val CARD_HOLDER_DATA_PHONE_ONLY = CardHolderDataList(
+    arrayListOf(CardHolderDataField.PHONE_NUMBER)
+)
+
+// Request both email and phone number
+private val CARD_HOLDER_DATA_BOTH = CardHolderDataList(
+    arrayListOf(
+        CardHolderDataField.EMAIL,
+        CardHolderDataField.PHONE_NUMBER
+    )
+)
+```
+---
+
 ### Creating a source
-If you need to create a payment source on your own and use it outside of the provided SDK context, you can do follow these steps. First build the Client and supply your public key in this manner:
+
+If you need to create a payment source and use it outside the provided SDK context, follow these steps. First, build the Client and supply your public key in this manner:
 
 ```kotlin
 private val client = Client("pkey_test_123")
 ```
 
-Then construct the Source request:
+Then, construct the Source request:
 
 ```kotlin
 val request = Source.CreateSourceRequestBuilder(25000L, "thb", SourceType.Installment.Bay)
@@ -344,7 +519,7 @@ val request = Source.CreateSourceRequestBuilder(25000L, "thb", SourceType.Instal
       .build()
 ```
 
-And then send the request using the `client` you have constructed earlier and you will get a `Source` object in response:
+Then, send the request using the `Client` you have constructed earlier. You will get a `Source` object in response:
 
 ```kotlin
 client.send(request, object : RequestListener<Source>{
@@ -358,10 +533,11 @@ client.send(request, object : RequestListener<Source>{
 })
 ```
 
-The `Client` class will automatically dispatch the network call on an internal background thread and will call listener methods on the thread that initially calls the send method.
+The `Client` class will automatically dispatch the network call on an internal background thread and call listener methods on the thread that initially calls the `send` method.
 
-### Retrieve Capabilities
-You can retrieve all of your capabilities and available payment sources through the SDK in the following manner.
+### Retrieving capabilities
+
+You can retrieve your capabilities and available payment sources through the SDK in the following manner.
 
 First build the Client and supply your public key this way:
 
@@ -369,13 +545,13 @@ First build the Client and supply your public key this way:
 private val client = Client("pkey_test_123")
 ```
 
-Then construct the Capability request:
+Then, construct the `Capability` request:
 
 ```kotlin
 val request = Capability.GetCapabilitiesRequestBuilder().build()
 ```
 
-And then send the request using the client we constructed earlier:
+And then send the request using the Client that you constructed earlier:
 
 ```kotlin
 client.send(request, object : RequestListener<Capability> {
@@ -389,14 +565,16 @@ client.send(request, object : RequestListener<Capability> {
 })
 ```
 
-The `Client` class will automatically dispatch the network call on an internal background thread and will call listener methods on the thread that initially calls the send method.
+The `Client` class will automatically dispatch the network call on an internal background thread and call listener methods on the thread that initially calls the `send` method.
 
-### Theme customization
-If you wish to customize the elements on the `CreditCardActivity` in order to
+### Customizing themes
+
+If you wish to customize the elements on the `CreditCardActivity` to
 match your application's branding, you can do so by overriding the following styles
-as shown in the snippet below:
+as shown in the following snippet:
 
 AndroidManifest.xml
+
 ```xml
 <activity
   android:name="co.omise.android.ui.CreditCardActivity"
@@ -404,7 +582,9 @@ AndroidManifest.xml
 ```
 
 style.xml
+
 ```xml
+<resources>
     <style name="SampleTheme" parent="Theme.MaterialComponents">
         <item name="android:editTextStyle">@style/SampleEditText</item>
         <item name="materialButtonStyle">@style/SampleButton</item>
@@ -432,12 +612,15 @@ style.xml
         <item name="backgroundTint">#FFFFFFFF</item>
         <item name="android:textColor">#FF000000</item>
     </style>
+</resources>
+
 ```
 
 And if you choose to customize the item text sizes for the lists in `PaymentCreatorActivity`, you
 can do so by overriding the following style.
 
 AndroidManifest.xml
+
 ```xml
 <activity
   android:name="co.omise.android.ui.PaymentCreatorActivity"
@@ -445,23 +628,29 @@ AndroidManifest.xml
 ```
 
 style.xml
+
 ```xml
+<resources>
     <style name="SampleTheme" parent="Theme.MaterialComponents">
         ...
         <item name="android:itemTextAppearance">@style/SampleItemTextAppearance</item>
     </style>
-    
+
     <style name="SampleItemTextAppearance" parent="TextAppearance.AppCompat.Body1">
         <item name="android:textSize">16sp</item>
         <item name="android:textColor">#FFFFFF</item>
     </style>
+</resources>
 ```
 
-## Authorizing Payment
-Some payment methods require the customer to authorize the payment via an authorization URL. This includes the [3-D Secure verification](https://www.omise.co/fraud-protection#3-d-secure), [Internet Banking payment](https://www.omise.co/offsite-payment), [Alipay](https://www.omise.co/alipay), etc. Omise Android SDK provides a built in class to handle the authorization.
+## Authorizing payment
 
+Some payment methods require the customer to authorize the payment using an authorization URL. This includes [3-D Secure verification](https://docs.omise.co/fraud-protection#3-d-secure), [Mobile Banking SCB](https://docs.omise.co/mobile-banking-scb), etc. Omise Android SDK provides a built-in class to handle the authorization.
 
-### Authorizing Payment activity
+On payment methods that require opening the external app (e.g., mobile banking app) to authorize the transaction, set the _return_uri_ to a **deep link** or **app link** to be able to open the merchant app. Otherwise, after the cardholder authorizes the transaction on the external app, the flow redirects to the normal link in the _return_uri_, and opens it on the browser app, resulting in the payment not being completed.
+Some authorized URLs will be processed using the in-app browser flow, and others will be processed using the native flow from the SDK (3DS v2), and the SDK automatically handles all of this.
+
+### Authorizing payment activity
 
 To use it, first declare the availability of the activity in your `AndroidManifest.xml`
 file as follows:
@@ -472,43 +661,118 @@ file as follows:
   android:theme="@style/OmiseTheme" />
 ```
 
-Then in your activity, declare the method that will start this activity this way:
+Then in your activity, declare the method that will start this activity as follows:
 
 ```kotlin
-private fun showAuthorizingPaymentForm() {
-    val intent = Intent(this, AuthorizingPaymentActivity::class.java)
-    intent.putExtra(AuthorizingPaymentURLVerifier.EXTRA_AUTHORIZED_URLSTRING, AUTHORIZED_URL)
-    intent.putExtra(AuthorizingPaymentURLVerifier.EXTRA_EXPECTED_RETURN_URLSTRING_PATTERNS, EXPECTED_URL_PATTERNS)
-    startActivityForResult(intent, AUTHORIZING_PAYMENT_REQUEST_CODE)
+private fun startAuthoringPaymentActivity() {
+    Intent(this, AuthorizingPaymentActivity::class.java).run {
+            putExtra(EXTRA_AUTHORIZED_URLSTRING, authorizeUrl)
+            putExtra(EXTRA_EXPECTED_RETURN_URLSTRING_PATTERNS, arrayOf(returnUrl))
+            putExtra(EXTRA_UI_CUSTOMIZATION, uiCustomization)
+            putExtra(
+                EXTRA_THREE_DS_REQUESTOR_APP_URL,
+                "sampleapp://omise.co/authorize_return"
+            )
+            authorizingPaymentLauncher.launch(this)
+        }
 }
 ```
 
-Replace the string `AUTHORIZED_URL` with the authorized URL that comes with the created charge and the array of string `EXPECTED_URL_PATTERNS` with the expected pattern of redirected URLs array.
-
-After the end-user completes the authorizing payment process, the activity result
-callback will be called, handle it in this manner:
+Replace the string `EXTRA_AUTHORIZED_URLSTRING` with the authorized URL that comes with the created charge and the array of string `EXTRA_EXPECTED_RETURN_URLSTRING_PATTERNS` with the expected pattern of redirected URLs array.
+Replace the string `EXTRA_THREE_DS_REQUESTOR_APP_URL` with the url of your app to allow the external bank apps to navigate back to your app when required.
+The `EXTRA_UI_CUSTOMIZATION` parameter is used to customize the UI of the built-in 3DS SDK during the 3DS challenge flow.
+If you want to customize the title of the authorizing payment activity, you must use the theme customization and pass the `headerText` in the `toolbarCustomization` in the `DEFAULT` theme parameter:
 
 ```kotlin
-override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    super.onActivityResult(requestCode, resultCode, data)
-    if (requestCode == AUTHORIZING_PAYMENT_REQUEST_CODE && resultCode == RESULT_OK) {
-        val url = data?.getStringExtra(AuthorizingPaymentURLVerifier.EXTRA_RETURNED_URLSTRING)
-        // Use the redirected URL here
+val toolbarCustomization = ToolbarCustomizationBuilder()
+            .textFontName("font/roboto_mono_bold.ttf")
+            .textColor("#000000")
+            .textFontSize(20)
+            .backgroundColor("#FFFFFF")
+            .headerText("Secure Checkout")
+            .buttonText("Close")
+            .build()
+
+            val uiCustomization = UiCustomizationBuilder()
+            .setDefaultTheme(ThemeConfig(
+                toolbarCustomization = toolbarCustomization,
+            ))
+            .build()
+```
+
+You can check out the [UiCustomization](/sdk/src/main/java/co/omise/android/config/UiCustomization.kt) class to see customizable UI elements in the challenge flow.
+
+After the end-user completes the payment authorization process, the activity result
+callback will be sent, and you will receive different responses based on how the transaction was processed
+and which flow it used. Handle it in this manner:
+
+```kotlin
+ fun handleActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+
+    // custom result code when web view is closed
+    if (resultCode == AuthorizingPaymentActivity.WEBVIEW_CLOSED_RESULT_CODE) {
+        snackbar.setText(R.string.webview_closed).show()
+        return
+    }
+
+    if (resultCode == RESULT_CANCELED) {
+        snackbar.setText(R.string.payment_cancelled).show()
+        return
+    }
+
+    if (data == null) {
+        snackbar.setText(R.string.payment_success_but_no_result).show()
+        return
+    }
+
+    when (requestCode) {
+        AUTHORIZING_PAYMENT_REQUEST_CODE -> {
+            with(data.parcelable<AuthorizingPaymentResult>(AuthorizingPaymentActivity.EXTRA_AUTHORIZING_PAYMENT_RESULT)) {
+                Log.d(TAG, this.toString())
+                val resultMessage = when (this) {
+                    is AuthorizingPaymentResult.ThreeDS1Completed -> "Authorization with 3D Secure version 1 completed: returnedUrl=${returnedUrl}"
+                    is AuthorizingPaymentResult.ThreeDS2Completed -> "Authorization with 3D Secure version 2 completed: transStatus=${transStatus}"
+                    is AuthorizingPaymentResult.Failure -> {
+                        Log.e(TAG, throwable.message, throwable.cause)
+                        throwable.message ?: "Unknown error."
+                    }
+
+                    null -> "Authorization result not found"
+                }
+                Log.d(TAG, resultMessage)
+                snackbar.setText(resultMessage).show()
+            }
+        }
     }
 }
 ```
 
-### Authorizing Payment via an external app
+You can check out the sample implementation in the [CheckoutActivity](./app/src/kotlin/java/co/omise/android/example/CheckoutActivity.kt) class in the sample app.
 
-Some request methods allow the user to authorize the payment with an external app, for example Alipay. When a user would like to authorize the payment with an external app, `AuthorizingPaymentActivity` will automatically open an external app. However merchant developers must handle the `Intent` callback by themselves.
+### Observing charge status in the token
 
-### 3D Secure 2
+The following utility function observes the token until its charge status changes. You can use it to check the charge status after the payment authorization process is completed.
 
-To support 3D Secure 2, you can check out the [3D Secure guide](docs/3d-secure-v2.md).
+```kotlin
+val client = Client("pkey_test_1234")
+client.observeTokenUntilChargeStatusChanged("tokn_test_1234", object: RequestListener<Token> {
+    override fun onRequestSucceed(model: Token) {
+        TODO("Not yet implemented")
+    }
 
-## ProGuard Rules
+    override fun onRequestFailed(throwable: Throwable) {
+        TODO("Not yet implemented")
+    }
+})
+```
 
-If you enable ProGuard, then add this rules in your ProGuard file.
+### Authorizing payment via an external app
+
+Some request methods allow the user to authorize the payment with an external app, for example Alipay. When a user needs to authorize the payment with an external app, `AuthorizingPaymentActivity` will automatically open an external app. However, merchant developers must handle the `Intent` callback themselves.
+
+## ProGuard rules
+
+If you enable ProGuard, then add these rules to your ProGuard file and apply any missing rules that your IDE notifies you about. 
 
 ```ProGuard
 -dontwarn okio.**
@@ -521,10 +785,14 @@ If you enable ProGuard, then add this rules in your ProGuard file.
 -keep class com.nimbusds.jose.** { *; }
 ```
 
+## Protecting screenshot and screen recording
+
+**Omise Android SDK** has built-in protection against screenshots and screen recording. To turn off this feature, you can pass `OmiseActivity.EXTRA_IS_SECURE` with a value of `false` when starting the following activities: `CreditCardActivity`, `PaymentCreatorActivity`, and `AuthorizingPaymentActivity`.
+
 ## Contributing
 
-Pull requests and bug fixes are welcome. For larger scope of work, please pop on to our [forum](https://forum.omise.co) to discuss first.
+Pull requests and bug fixes are welcome.
 
-## LICENSE
+## License
 
 MIT [See the full license text](https://github.com/omise/omise-android/blob/master/LICENSE)

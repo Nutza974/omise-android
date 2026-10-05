@@ -1,7 +1,7 @@
 package co.omise.android.models
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import kotlinx.android.parcel.Parcelize
+import kotlinx.parcelize.Parcelize
 import org.joda.time.DateTime
 
 /**
@@ -12,62 +12,62 @@ import org.joda.time.DateTime
  */
 @Parcelize
 data class PaymentMethod(
-        var name: String? = null,
-        var currencies: List<String>? = null,
-        @field:JsonProperty("card_brands")
-        var cardBrands: List<String>? = null,
-        @field:JsonProperty("installment_terms")
-        var installmentTerms: List<Int>? = null,
-        var banks: List<Bank>? = null,
-        var provider: String? = null,
-        override var modelObject: String? = null,
-        override var id: String? = null,
-        override var livemode: Boolean = false,
-        override var location: String? = null,
-        override var created: DateTime? = null,
-        override var deleted: Boolean = false
+    var name: String? = null,
+    var currencies: List<String>? = null,
+    @field:JsonProperty("card_brands")
+    var cardBrands: List<String>? = null,
+    @field:JsonProperty("installment_terms")
+    var installmentTerms: List<Int>? = null,
+    var banks: List<Bank>? = null,
+    var provider: String? = null,
+    override var modelObject: String? = null,
+    override var id: String? = null,
+    override var livemode: Boolean = false,
+    override var location: String? = null,
+    override var created: DateTime? = null,
+    override var deleted: Boolean = false,
 ) : Model {
-
     companion object {
         @JvmStatic
-        fun createCreditCardMethod(): PaymentMethod =
-                PaymentMethod(name = "card")
+        fun createCreditCardMethod(): PaymentMethod = PaymentMethod(name = "card")
 
         @JvmStatic
         fun createSourceTypeMethod(sourceType: SourceType): PaymentMethod =
-                PaymentMethod(
-                        name = sourceType.name,
-                        installmentTerms = when (sourceType) {
-                            is SourceType.Installment -> SourceType.Installment.availableTerms(sourceType)
-                            else -> null
-                        },
-                        banks = when (sourceType) {
-                            is SourceType.Fpx -> sourceType.banks
-                            else -> null
-                        },
-                        provider = when (sourceType) {
-                            is SourceType.TouchNGo -> sourceType.provider
-                            is SourceType.GrabPay -> sourceType.provider
-                            else -> null
-                        }
-                )
+            PaymentMethod(
+                name = sourceType.name,
+                // empty list as it will be replaced by the actual terms from capability
+                installmentTerms = listOf(),
+                banks =
+                    when (sourceType) {
+                        is SourceType.Fpx -> sourceType.banks
+                        else -> null
+                    },
+                provider =
+                    when (sourceType) {
+                        is SourceType.TouchNGo -> sourceType.provider
+                        is SourceType.GrabPay -> sourceType.provider
+                        else -> null
+                    },
+            )
 
         @JvmStatic
         fun createTokenizationMethod(tokenizationMethod: TokenizationMethod): PaymentMethod =
-                PaymentMethod(
-                        name = tokenizationMethod.name,
-                )
+            PaymentMethod(
+                name = tokenizationMethod.name,
+            )
     }
 }
 
 val PaymentMethod.backendType: BackendType
-    get() = when (name) {
-        "card" -> BackendType.Token(TokenizationMethod.creator(name))
-        "googlepay" -> BackendType.Token(TokenizationMethod.creator(name))
-        else -> BackendType.Source(SourceType.creator(name))
-    }
+    get() =
+        when (name) {
+            "card" -> BackendType.Token(TokenizationMethod.creator(name))
+            "googlepay" -> BackendType.Token(TokenizationMethod.creator(name))
+            else -> BackendType.Source(SourceType.creator(name))
+        }
 
 sealed class BackendType(open val name: String?) {
     data class Token(val tokenizationMethod: TokenizationMethod) : BackendType(tokenizationMethod.name)
+
     data class Source(val sourceType: SourceType) : BackendType(sourceType.name)
 }

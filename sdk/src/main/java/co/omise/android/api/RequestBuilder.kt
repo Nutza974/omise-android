@@ -1,10 +1,12 @@
 package co.omise.android.api
 
+import co.omise.android.models.APIError
 import co.omise.android.models.Model
 import co.omise.android.models.Serializer
 import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.util.Objects.requireNonNull
@@ -19,14 +21,13 @@ import kotlin.jvm.Throws
  * the [Client] when this request is passed to it.
  */
 abstract class RequestBuilder<T : Model> {
-
     /**
      * Builds request with all its enclosing information and payload (if available).
      *
      * @return built [Request] of type [Model].
      */
     fun build(): Request<T> {
-        return Request(method(), path(), payload(), type())
+        return Request(method(), path(), payload(), type(), errorType(), this)
     }
 
     /**
@@ -53,7 +54,7 @@ abstract class RequestBuilder<T : Model> {
      * @return the params as a [RequestBody].
      */
     open fun payload(): RequestBody? {
-        //Has to be null as it would fail for GET requests
+        // Has to be null as it would fail for GET requests
         return null
     }
 
@@ -65,6 +66,13 @@ abstract class RequestBuilder<T : Model> {
      */
     protected abstract fun type(): Class<T>
 
+    /**
+     * Abstract method that needs to be implemented by all children of this class to
+     * provide error type.
+     *
+     * @return Class type of error.
+     */
+    open fun errorType(): Class<Error> = APIError::class.java as Class<Error>
 
     /**
      * Builds and returns a valid [HttpUrl] pointing to the given [Endpoint]'s host
@@ -74,7 +82,11 @@ abstract class RequestBuilder<T : Model> {
      * @param path The base API path.
      * @return An [HttpUrl] instance.
      */
-    protected fun buildUrl(endpoint: Endpoint, path: String, vararg segments: String): HttpUrl {
+    protected fun buildUrl(
+        endpoint: Endpoint,
+        path: String,
+        vararg segments: String,
+    ): HttpUrl {
         return HttpUrlBuilder(endpoint, path, segments.asList()).build()
     }
 
@@ -90,7 +102,7 @@ abstract class RequestBuilder<T : Model> {
     protected fun serialize(): RequestBody {
         val stream = ByteArrayOutputStream(4096)
         serializer().serializeRequestBuilder(stream, this)
-        return RequestBody.create(JSON_MEDIA_TYPE, stream.toByteArray())
+        return stream.toByteArray().toRequestBody(JSON_MEDIA_TYPE)
     }
 
     private fun serializer(): Serializer {
@@ -98,7 +110,6 @@ abstract class RequestBuilder<T : Model> {
     }
 
     inner class HttpUrlBuilder(private val endpoint: Endpoint, private val path: String, private val segments: List<String>) {
-
         fun build(): HttpUrl {
             requireNonNull(endpoint)
             requireNonNull(path)

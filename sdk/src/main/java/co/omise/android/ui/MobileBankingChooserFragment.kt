@@ -1,7 +1,9 @@
 package co.omise.android.ui
 
 import android.os.Bundle
+import android.view.View
 import co.omise.android.R
+import co.omise.android.extensions.getParcelableArrayCompat
 import co.omise.android.models.BackendType
 import co.omise.android.models.PaymentMethod
 import co.omise.android.models.Source
@@ -13,19 +15,25 @@ import co.omise.android.models.backendType
  * available Mobile Banking options list for the user to choose from.
  */
 internal class MobileBankingChooserFragment : OmiseListFragment<MobileBankingResource>() {
-
     private val allowedBanks: List<SourceType.MobileBanking> by lazy {
         val args = arguments ?: return@lazy emptyList<SourceType.MobileBanking>()
-        val paymentMethods = args.getParcelableArray(EXTRA_MOBILE_BANKING_METHODS) as Array<PaymentMethod>
+        val paymentMethods =
+            args.getParcelableArrayCompat<PaymentMethod>(EXTRA_MOBILE_BANKING_METHODS)
         return@lazy paymentMethods
-                .filter { it.backendType is BackendType.Source && (it.backendType as BackendType.Source).sourceType is SourceType.MobileBanking }
-                .map { (it.backendType as BackendType.Source).sourceType as SourceType.MobileBanking }
+            .filter {
+                it.backendType is BackendType.Source &&
+                    (it.backendType as BackendType.Source).sourceType is SourceType.MobileBanking
+            }
+            .map { (it.backendType as BackendType.Source).sourceType as SourceType.MobileBanking }
     }
 
     var requester: PaymentCreatorRequester<Source>? = null
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
 
         title = getString(R.string.mobile_banking_chooser_title)
         setHasOptionsMenu(true)
@@ -37,7 +45,8 @@ internal class MobileBankingChooserFragment : OmiseListFragment<MobileBankingRes
         view?.let { setAllViewsEnabled(it, false) }
 
         val sourceType = item.sourceType
-        val request = Source.CreateSourceRequestBuilder(req.amount, req.currency, sourceType).build()
+        val request =
+            Source.CreateSourceRequestBuilder(req.amount, req.currency, sourceType).build()
         requester?.request(request) { view?.let { setAllViewsEnabled(it, true) } }
     }
 
@@ -46,13 +55,18 @@ internal class MobileBankingChooserFragment : OmiseListFragment<MobileBankingRes
     }
 
     companion object {
-        private const val EXTRA_MOBILE_BANKING_METHODS = "MobileBankingChooserFragment.mobileBankingMethods"
+        private const val EXTRA_MOBILE_BANKING_METHODS =
+            "MobileBankingChooserFragment.mobileBankingMethods"
 
         fun newInstance(availableBanks: List<PaymentMethod>) =
-                MobileBankingChooserFragment().apply {
-                    arguments = Bundle().apply {
-                        putParcelableArray(EXTRA_MOBILE_BANKING_METHODS, availableBanks.toTypedArray())
+            MobileBankingChooserFragment().apply {
+                arguments =
+                    Bundle().apply {
+                        putParcelableArray(
+                            EXTRA_MOBILE_BANKING_METHODS,
+                            availableBanks.toTypedArray(),
+                        )
                     }
-                }
+            }
     }
 }

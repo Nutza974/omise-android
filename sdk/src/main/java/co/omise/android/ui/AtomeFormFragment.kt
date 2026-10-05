@@ -9,46 +9,64 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
 import co.omise.android.R
+import co.omise.android.databinding.FragmentAtomeFormBinding
 import co.omise.android.extensions.setOnAfterTextChangeListener
 import co.omise.android.extensions.setOnClickListener
-import co.omise.android.models.*
-import kotlinx.android.synthetic.main.fragment_atome_form.*
+import co.omise.android.models.Billing
+import co.omise.android.models.Item
+import co.omise.android.models.Shipping
+import co.omise.android.models.Source
+import co.omise.android.models.SourceType
 
 /**
  * AtomeFormFragment is the UI class for handling all Atome payment methods.
  */
 class AtomeFormFragment : OmiseFragment() {
-
     var requester: PaymentCreatorRequester<Source>? = null
 
-    private val fullNameEdit: OmiseEditText by lazy { edit_full_name }
-    private val emailEdit: OmiseEditText by lazy { edit_email }
-    private val emailErrorText by lazy { text_atome_email_error }
-    private val phoneNumberEdit: OmiseEditText by lazy { edit_phone_number }
-    private val phoneNumberErrorText by lazy { text_phone_number_error }
+    private var _binding: FragmentAtomeFormBinding? = null
+    private val binding get() = _binding!!
 
-    private val shippingStreetEdit by lazy { edit_shipping_street }
-    private val shippingPostalEdit by lazy { edit_shipping_postal }
-    private val shippingCityEdit by lazy { edit_shipping_city }
-    private val shippingCountryEdit by lazy { edit_shipping_country }
-    private val shippingAddressErrorText by lazy { text_shipping_address_error }
+    private val fullNameEdit: OmiseEditText get() = binding.editFullName
+    private val emailEdit: OmiseEditText get() = binding.editEmail
+    private val emailErrorText get() = binding.textAtomeEmailError
+    private val phoneNumberEdit: OmiseEditText get() = binding.editPhoneNumber
+    private val phoneNumberErrorText get() = binding.textPhoneNumberError
 
-    private val billingAddressView by lazy { billing_address }
-    private val billingStreetEdit by lazy { edit_billing_street }
-    private val billingPostalEdit by lazy { edit_billing_postal }
-    private val billingCityEdit by lazy { edit_billing_city }
-    private val billingCountryEdit by lazy { edit_billing_country }
-    private val billingAddressErrorText by lazy { text_billing_address_error }
+    private val shippingStreetEdit get() = binding.editShippingStreet
+    private val shippingPostalEdit get() = binding.editShippingPostal
+    private val shippingCityEdit get() = binding.editShippingCity
+    private val shippingCountryEdit get() = binding.editShippingCountry
+    private val shippingAddressErrorText get() = binding.textShippingAddressError
 
-    private val checkBoxBillingShipping by lazy { checkbox_billing_shipping }
-    private val submitButton: Button by lazy { button_submit }
+    private val billingStreetEdit get() = binding.editBillingStreet
+    private val billingPostalEdit get() = binding.editBillingPostal
+    private val billingCityEdit get() = binding.editBillingCity
+    private val billingCountryEdit get() = binding.editBillingCountry
+    private val billingAddressErrorText get() = binding.textBillingAddressError
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_atome_form, container, false)
+    private val checkBoxBillingShipping get() = binding.checkboxBillingShipping
+    private val submitButton: Button get() = binding.buttonSubmit
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View {
+        _binding = FragmentAtomeFormBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
 
         setHasOptionsMenu(true)
 
@@ -129,10 +147,11 @@ class AtomeFormFragment : OmiseFragment() {
 
     private fun updateShippingAddressErrorText(hasFocus: Boolean) {
         if (hasFocus || (
-                    shippingStreetEdit.isValid &&
-                            shippingPostalEdit.isValid &&
-                            shippingCityEdit.isValid &&
-                            isCountryCodeValid(shippingCountryEdit))
+                shippingStreetEdit.isValid &&
+                    shippingPostalEdit.isValid &&
+                    shippingCityEdit.isValid &&
+                    isCountryCodeValid(shippingCountryEdit)
+            )
         ) {
             with(shippingAddressErrorText) {
                 text = ""
@@ -177,9 +196,9 @@ class AtomeFormFragment : OmiseFragment() {
             when (view.id) {
                 R.id.checkbox_billing_shipping -> {
                     if (checked) {
-                        billing_address.visibility = GONE
+                        binding.billingAddress.visibility = GONE
                     } else {
-                        billing_address.visibility = VISIBLE
+                        binding.billingAddress.visibility = VISIBLE
                     }
                 }
             }
@@ -188,12 +207,12 @@ class AtomeFormFragment : OmiseFragment() {
 
     private fun updateSubmitButton() {
         submitButton.isEnabled = (emailEdit.text?.isEmpty() == true || isEmailValid(emailEdit)) &&
-                isPhoneNumberValid(phoneNumberEdit) &&
-                shippingStreetEdit.isValid &&
-                shippingPostalEdit.isValid &&
-                shippingCityEdit.isValid &&
-                isCountryCodeValid(shippingCountryEdit) &&
-                (billingCityEdit.text?.isEmpty() == true || isCountryCodeValid(billingCountryEdit))
+            isPhoneNumberValid(phoneNumberEdit) &&
+            shippingStreetEdit.isValid &&
+            shippingPostalEdit.isValid &&
+            shippingCityEdit.isValid &&
+            isCountryCodeValid(shippingCountryEdit) &&
+            (billingCityEdit.text?.isEmpty() == true || isCountryCodeValid(billingCountryEdit))
     }
 
     private fun submitForm() {
@@ -218,8 +237,8 @@ class AtomeFormFragment : OmiseFragment() {
                 street1 = shippingStreet,
                 postalCode = shippingPostal,
                 city = shippingCity,
-                country = shippingCountry
-            )
+                country = shippingCountry,
+            ),
         ).items(
             listOf(
                 Item(
@@ -231,8 +250,8 @@ class AtomeFormFragment : OmiseFragment() {
                     "www.kan.com/product/shoes",
                     "www.kan.com/product/shoes/image",
                     "Gucci",
-                )
-            )
+                ),
+            ),
         )
 
         if (!checkBoxBillingShipping.isChecked) {
@@ -241,8 +260,8 @@ class AtomeFormFragment : OmiseFragment() {
                     street1 = billingStreetEdit.text?.toString()?.trim().orEmpty(),
                     postalCode = billingPostalEdit.text?.toString()?.trim().orEmpty(),
                     city = billingCityEdit.text?.toString()?.trim().orEmpty(),
-                    country = billingCountryEdit.text?.toString()?.trim().orEmpty()
-                )
+                    country = billingCountryEdit.text?.toString()?.trim().orEmpty(),
+                ),
             )
         } else {
             requestBuilder.billing(
@@ -250,8 +269,8 @@ class AtomeFormFragment : OmiseFragment() {
                     street1 = shippingStreet,
                     postalCode = shippingPostal,
                     city = shippingCity,
-                    country = shippingCountry
-                )
+                    country = shippingCountry,
+                ),
             )
         }
 

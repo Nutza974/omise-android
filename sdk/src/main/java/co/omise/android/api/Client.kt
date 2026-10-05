@@ -1,7 +1,7 @@
 package co.omise.android.api
 
-import android.os.Build
 import android.os.Handler
+import android.os.Looper
 import co.omise.android.models.Model
 import okhttp3.ConnectionSpec
 import okhttp3.OkHttpClient
@@ -24,10 +24,9 @@ import kotlin.coroutines.suspendCoroutine
  * @see [Security Best Practices](https://www.omise.co/security-best-practices)
  */
 class Client(publicKey: String) {
-
     private var httpClient: OkHttpClient
     private val background: Executor
-    private val handler = Handler()
+    private val handler = Handler(Looper.getMainLooper())
 
     init {
         background = Executors.newSingleThreadExecutor()
@@ -41,37 +40,40 @@ class Client(publicKey: String) {
      * @param request  The [Request] to be sent.
      * @param listener The [RequestListener] to listen for request response.
      */
-    fun <T : Model> send(request: Request<T>, listener: RequestListener<T>) {
+    fun <T : Model> send(
+        request: Request<T>,
+        listener: RequestListener<T>,
+    ) {
         background.execute { Invocation(handler, httpClient, request, listener).invoke() }
     }
 
-    suspend fun <T : Model> send(request: Request<T>) = suspendCoroutine<T> { continuation ->
-        send(request, object : RequestListener<T> {
-            override fun onRequestSucceed(model: T) {
-                continuation.resume(model)
-            }
+    suspend fun <T : Model> send(request: Request<T>) =
+        suspendCoroutine { continuation ->
+            send(
+                request,
+                object : RequestListener<T> {
+                    override fun onRequestSucceed(model: T) {
+                        continuation.resume(model)
+                    }
 
-            override fun onRequestFailed(throwable: Throwable) {
-                continuation.resumeWithException(throwable)
-            }
-        })
-    }
+                    override fun onRequestFailed(throwable: Throwable) {
+                        continuation.resumeWithException(throwable)
+                    }
+                },
+            )
+        }
 
     private fun buildHttpClient(config: Config): OkHttpClient {
         val builder = OkHttpClient.Builder()
-        val spec = ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+        val spec =
+            ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
                 .tlsVersions(TlsVersion.TLS_1_2)
                 .build()
 
-        if (Build.VERSION.SDK_INT < 21) {
-            val trustManager = TLSPatch.systemDefaultTrustManager()
-            builder.sslSocketFactory(TLSPatch.TLSSocketFactory(), trustManager)
-        }
-
         return builder
-                .addInterceptor(Configurer(config))
-                .connectionSpecs(listOf(spec))
-                .readTimeout(60, TimeUnit.SECONDS)
-                .build()
+            .addInterceptor(Configurer(config))
+            .connectionSpecs(listOf(spec))
+            .readTimeout(60, TimeUnit.SECONDS)
+            .build()
     }
 }

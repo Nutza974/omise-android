@@ -1,27 +1,32 @@
 apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-parcelize'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion compile_sdk_version
-    buildToolsVersion build_tools_version
+
+    buildFeatures {
+        viewBinding true
+    }
 
     defaultConfig {
-        applicationId "co.omise.android.example"
+        namespace "co.omise.android.example"
         minSdkVersion min_sdk_version
         targetSdkVersion target_sdk_version
         versionCode sample_app_code_version
         versionName sample_app_version
+        compileSdk compile_sdk_version
     }
 
     buildTypes {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debug
         }
     }
 
-    flavorDimensions "language", "mode"
+    flavorDimensions += "language"
+    flavorDimensions += "mode"
 
     productFlavors {
         java {
@@ -46,8 +51,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
     }
 }
 
@@ -57,7 +65,6 @@ dependencies {
     implementation "androidx.constraintlayout:constraintlayout:$constraintlayout_version"
     implementation "androidx.preference:preference:$preference_version"
     implementation "com.google.android.material:material:$material_version"
-    implementation "com.google.guava:guava:$guava_version"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     implementation project(':sdk')
 //    implementation "co.omise:omise-android:$omise_sdk_version"

@@ -27,19 +27,26 @@ class ModelTypeResolver : TypeIdResolverBase() {
             (types as HashMap<String, Class<*>>)["error"] = APIError::class.java
             (types as HashMap<String, Class<*>>)["barcode"] = Barcode::class.java
             (types as HashMap<String, Class<*>>)["document"] = Document::class.java
+            (types as HashMap<String, Class<*>>)["authentication"] = Authentication::class.java
         }
-        return Collections.unmodifiableMap(types)
+        return Collections.unmodifiableMap(types as MutableMap<out String, out Class<*>>)
     }
 
     override fun idFromValue(value: Any): String {
         return idFromValueAndType(value, value::class.java)
     }
 
-    override fun idFromValueAndType(value: Any, suggestedType: Class<*>): String {
+    override fun idFromValueAndType(
+        value: Any,
+        suggestedType: Class<*>,
+    ): String {
         return reverse(getKnownTypes())[suggestedType] ?: ""
     }
 
-    override fun typeFromId(context: DatabindContext, id: String): JavaType? {
+    override fun typeFromId(
+        context: DatabindContext,
+        id: String,
+    ): JavaType? {
         val klass = getKnownTypes()[id] ?: return null
         return context.typeFactory.constructSimpleType(klass, arrayOf())
     }

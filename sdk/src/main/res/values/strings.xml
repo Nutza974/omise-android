@@ -5,6 +5,7 @@
     <string name="default_form_title">Credit Card</string>
     <string name="description_brand_logo">Card brand logo</string>
     <string name="error_io">Network communication error, please make sure you have a stable internet connection. (%1$s)</string>
+    <string name="error_loading_payment_methods">Unable to load payment methods</string>
     <string name="error_invalid_card_number">Credit card number is invalid</string>
     <string name="error_invalid_card_name">Card holder name is invalid</string>
     <string name="error_invalid_expiration_date">Card expiration date is invalid</string>
@@ -14,6 +15,10 @@
     <string name="error_invalid_phone_number">Phone number is invalid</string>
     <string name="error_invalid">%1$s is invalid</string>
     <string name="error_required">%1$s is required</string>
+    <string name="error_required_street1">Address is required</string>
+    <string name="error_required_city">City is required</string>
+    <string name="error_required_state">State is required</string>
+    <string name="error_required_postal_code">Zip code / Postal code is required</string>
 
     <string name="error_api_authentication_failure">Authentication failure</string>
     <string name="error_api_invalid_card_invalid_card_number">Invalid card number</string>
@@ -33,7 +38,7 @@
     <string name="error_api_bad_request_invalid_phone_number">The customer phone number is invalid</string>
     <string name="error_api_bad_request_name_is_too_long_with_valid_length">The customer name exceeds the %d character limit</string>
     <string name="error_api_bad_request_name_is_too_long_without_valid_length">The customer name is too long</string>
-    <string name="error_api_bad_request_type_not_supported">The source type is not supported by this account</string>
+    <string name="error_api_bad_request_source_type_not_supported">The source type is not supported by this account</string>
 
     <string name="error_api_service_not_found">Service not found</string>
 
@@ -46,6 +51,11 @@
     <string name="label_email">Email</string>
     <string name="label_phone_number">Phone</string>
     <string name="label_security_code">Security code</string>
+    <string name="label_country">Country or region</string>
+    <string name="label_address">Address</string>
+    <string name="label_state">State</string>
+    <string name="label_postal_code">Zip code / Postal code</string>
+
     <string name="menu_card_io">Scan from Camera</string>
     <string name="title_authorizing_payment">Authorizing Payment</string>
     <string name="title_convenience_store">Convenience Store</string>
@@ -57,14 +67,15 @@
     <string name="cvv_tooltip_3_digits">3 digit number on the\nback of your card</string>
     <string name="cvv_tooltip_4_digits">4 digit number on the\nfront of your card</string>
     <string name="payment_chooser_title">Payment Methods</string>
-    <string name="internet_banking_chooser_title">Internet Banking</string>
+
     <string name="mobile_banking_chooser_title">Mobile Banking</string>
     <string name="installments_title">Installments</string>
+    <string name="installments_amount_lower_than_monthly_limit">Amount is lower than the monthly minimum payment amount</string>
     <string name="econtext_title">econtext</string>
     <string name="menu_title_close">Close</string>
 
     <string name="payment_method_credit_card_title">Credit Card</string>
-    <string name="payment_method_internet_banking_title">Internet Banking</string>
+
     <string name="payment_method_mobile_banking_title">Mobile Banking</string>
     <string name="payment_method_alipay_title">Alipay Online</string>
     <string name="payment_method_tesco_lotus_title">Lotus\'s Bill Payment</string>
@@ -80,7 +91,6 @@
     <string name="payment_method_installment_first_choice_title">Krungsri First Choice</string>
     <string name="payment_method_installment_ktc_title">KTC</string>
     <string name="payment_method_installment_scb_title">Siam Commercial Bank</string>
-    <string name="payment_method_installment_citi_title">Citibank</string>
     <string name="payment_method_installment_ttb_title">TMBThanachart Bank</string>
     <string name="payment_method_installment_uob_title">United Overseas Bank</string>
     <string name="payment_method_installment_term_month_title">%d month</string>
@@ -91,14 +101,12 @@
     <string name="payment_method_mobile_banking_scb_title">SCB EASY</string>
     <string name="payment_method_mobile_banking_kbank_title">K PLUS</string>
     <string name="payment_method_mobile_banking_ktb_title">Krungthai NEXT</string>
-    <string name="payment_method_mobile_banking_ocbc_pao_title">OCBC Pay Anyone</string>
+    <string name="payment_method_ocbc_digital_title">OCBC Digital</string>
 
-    <string name="payment_method_internet_banking_bay_title">Bank of Ayudhya</string>
-    <string name="payment_method_internet_banking_bbl_title">Bangkok Bank</string>
+
     <string name="payment_method_promptpay_title">PromptPay</string>
     <string name="payment_method_paynow_title">PayNow</string>
-    <string name="payment_method_points_citi_title">Pay with Citi Rewards Points</string>
-    <string name="payment_truemoney_title">TrueMoney Wallet</string>
+    <string name="payment_truemoney_title">TrueMoney</string>
     <string name="truemoney_info_text">Please input the mobile number connected to your TrueMoney Wallet account</string>
     <string name="payment_method_fpx_title">FPX</string>
     <string name="fpx_info_text">(Optional) Please input your email to receive transaction confirmation from FPX</string>
@@ -114,7 +122,7 @@
     <string name="payment_method_touch_n_go_title">Touch ’n Go</string>
     <string name="googlepay">Google Pay</string>
     <string name="pay_with_googlepay_button_content_description" translatable="false">Pay With Google Pay</string>
-    <string name="payment_method_rabbit_linepay_title" translatable="false">Rabbit LINE Pay</string>
+    <string name="payment_method_rabbit_linepay_title" translatable="false">LINE Pay</string>
     <string name="payment_method_boots_title" translatable="false">Boost</string>
     <string name="payment_method_shopeepay_title" translatable="false">ShopeePay</string>
     <string name="payment_method_maybank_qr_title" translatable="false">Maybank QRPay</string>
@@ -123,8 +131,9 @@
     <string name="payment_method_grabpay_title" translatable="false">Grab</string>
     <string name="payment_method_grabpay_rms_title" translatable="false">GrabPay</string>
     <string name="payment_method_grabpay_footnote" translatable="false">(GrabPay and PayLater)</string>
-    <string name="payment_method_paypay_title">PayPay</string>
+    <string name="payment_method_paypay_title" translatable="false">PayPay</string>
     <string name="payment_method_atome_title">Atome</string>
+    <string name="payment_method_wechat_pay_title">WeChat Pay</string>
     <string name="label_name">Name (optional)</string>
     <string name="label_email_optional">Email (optional)</string>
     <string name="label_shipping">Shipping address</string>

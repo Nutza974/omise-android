@@ -1,16 +1,16 @@
 package co.omise.android.ui
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Canvas
-import android.graphics.Paint
+import android.graphics.drawable.Drawable
 import android.text.Editable
 import android.text.InputFilter
 import android.text.InputType
 import android.text.TextWatcher
 import android.util.AttributeSet
+import androidx.core.content.ContextCompat
 import co.omise.android.CardNumber
+import co.omise.android.R
 import co.omise.android.models.CardBrand
 
 /**
@@ -19,14 +19,13 @@ import co.omise.android.models.CardBrand
  * card number.
  */
 class CreditCardEditText : OmiseEditText {
-
     companion object {
-        private const val CARD_NUMBER_WITH_SPACE_LENGTH = 19
+        private const val CARD_NUMBER_WITH_SPACE_LENGTH = 23
         private const val SEPARATOR = " "
     }
 
-    private var cardBrandImage: Bitmap? = null
-    private var cardBrandImagePaint: Paint? = null
+    private var cardBrandImage: Drawable? = null
+    private var cardBrandIconSize: Int = 0
 
     val cardNumber: String
         get() = text.toString().trim().replace(SEPARATOR, "")
@@ -44,42 +43,64 @@ class CreditCardEditText : OmiseEditText {
         filters = arrayOf(InputFilter.LengthFilter(CARD_NUMBER_WITH_SPACE_LENGTH))
         inputType = InputType.TYPE_CLASS_PHONE
 
-        addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {
-                //Do nothing
-            }
-
-            override fun onTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {
-                //Do nothing
-            }
-
-            override fun afterTextChanged(e: Editable) {
-                if (e.isEmpty() || e.length % 5 != 0) {
-                    return
+        addTextChangedListener(
+            object : TextWatcher {
+                override fun beforeTextChanged(
+                    charSequence: CharSequence,
+                    i: Int,
+                    i1: Int,
+                    i2: Int,
+                ) {
+                    // Do nothing
                 }
 
-                val c = e[e.length - 1]
-                if (Character.isDigit(c)) {
-                    // Insert space bar
-                    e.insert(e.length - 1, SEPARATOR)
-                } else if (c == ' ') {
-                    // Delete space bar
-                    e.delete(e.length - 1, e.length)
+                override fun onTextChanged(
+                    charSequence: CharSequence,
+                    i: Int,
+                    i1: Int,
+                    i2: Int,
+                ) {
+                    // Do nothing
                 }
 
-                updateCardBrandImage()
-            }
-        })
+                override fun afterTextChanged(e: Editable) {
+                    if (e.isEmpty() || e.length % 5 != 0) {
+                        return
+                    }
 
-        cardBrandImagePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+                    val c = e[e.length - 1]
+                    if (Character.isDigit(c)) {
+                        // Insert space bar
+                        e.insert(e.length - 1, SEPARATOR)
+                    } else if (c == ' ') {
+                        // Delete space bar
+                        e.delete(e.length - 1, e.length)
+                    }
+
+                    updateCardBrandImage()
+                }
+            },
+        )
+
+        cardBrandIconSize = resources.getDimensionPixelSize(R.dimen.card_brand_icon_size)
     }
 
-    override fun onDraw(canvas: Canvas?) {
+    override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         cardBrandImage?.let {
-            val imageLeftPosition = width.toFloat() - it.width - paddingRight
-            val imageTopPosition = (height - it.height) / 2f
-            canvas?.drawBitmap(it, imageLeftPosition, imageTopPosition, cardBrandImagePaint)
+            val targetHeight = cardBrandIconSize
+            val ratio = it.intrinsicWidth.toFloat() / it.intrinsicHeight.toFloat()
+            val targetWidth = (targetHeight * ratio).toInt()
+
+            val imageLeftPosition = width - targetWidth - paddingRight
+            val imageTopPosition = (height - targetHeight) / 2
+            it.setBounds(
+                imageLeftPosition,
+                imageTopPosition,
+                imageLeftPosition + targetWidth,
+                imageTopPosition + targetHeight,
+            )
+            it.draw(canvas)
         }
     }
 
@@ -98,7 +119,7 @@ class CreditCardEditText : OmiseEditText {
         if (number.length > 6) {
             val brand = CardNumber.brand(number)
             if (brand != null && brand.logoResourceId > -1) {
-                cardBrandImage = BitmapFactory.decodeResource(resources, brand.logoResourceId)
+                cardBrandImage = ContextCompat.getDrawable(context, brand.logoResourceId)
                 return
             }
         }

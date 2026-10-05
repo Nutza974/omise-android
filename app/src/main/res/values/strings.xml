@@ -7,6 +7,7 @@
     <string name="format_price" formatted="false" translatable="false">THB %.2f</string>
     <string name="menu_title_setup" translatable="false">Setup</string>
     <string name="payment_cancelled" translatable="false">Payment creation cancelled</string>
+    <string name="webview_closed" translatable="false">The webView has been closed</string>
     <string name="button_choose_payment_method" translatable="false">Choose Payment Method</string>
     <string name="button_pay_by_credit_card" translatable="false">Pay by Credit Card</string>
     <string name="button_authorize_url" translatable="false">Authorize URL</string>
@@ -17,8 +18,7 @@
     <string name="payment_preference_is_use_specifics_payment_methods_key" translatable="false">is_use_specifics_payment_methods</string>
     <string name="payment_preference_zero_interest_installments_key" translatable="false">zero_interest_installments</string>
     <string name="payment_preference_credit_card_key" translatable="false">credit_card</string>
-    <string name="payment_preference_internet_banking_bay_key" translatable="false">internet_banking_bay</string>
-    <string name="payment_preference_internet_banking_bbl_key" translatable="false">internet_banking_bbl</string>
+
     <string name="payment_preference_alipay_key" translatable="false">alipay</string>
     <string name="payment_preference_alipay_cn_key" translatable="false">alipay_cn</string>
     <string name="payment_preference_alipay_hk_key" translatable="false">alipay_hk</string>
@@ -28,17 +28,24 @@
     <string name="payment_preference_mobile_banking_bbl_key" translatable="false">mobile_banking_bbl</string>
     <string name="payment_preference_mobile_banking_kbank_key" translatable="false">mobile_banking_kbank</string>
     <string name="payment_preference_mobile_banking_ktb_key" translatable="false">mobile_banking_ktb</string>
-    <string name="payment_preference_mobile_banking_ocbc_pao_key" translatable="false">mobile_banking_ocbc_pao</string>
+<string name="payment_preference_ocbc_digital_key" translatable="false">mobile_banking_ocbc</string>
     <string name="payment_preference_installment_bay_key" translatable="false">installment_bay</string>
+    <string name="payment_preference_installment_bay_wlb_key" translatable="false">installment_wlb_bay</string>
     <string name="payment_preference_installment_first_choice_key" translatable="false">installment_first_choice</string>
+    <string name="payment_preference_installment_first_choice_wlb_key" translatable="false">installment_wlb_first_choice</string>
     <string name="payment_preference_installment_bbl_key" translatable="false">installment_bbl</string>
+    <string name="payment_preference_installment_bbl_wlb_key" translatable="false">installment_wlb_bbl</string>
     <string name="payment_preference_installment_mbb_key" translatable="false">installment_mbb</string>
     <string name="payment_preference_installment_ktc_key" translatable="false">installment_ktc</string>
+    <string name="payment_preference_installment_ktc_wlb_key" translatable="false">installment_wlb_ktc</string>
     <string name="payment_preference_installment_kbank_key" translatable="false">installment_kbank</string>
+    <string name="payment_preference_installment_kbank_wlb_key" translatable="false">installment_wlb_kbank</string>
     <string name="payment_preference_installment_scb_key" translatable="false">installment_scb</string>
-    <string name="payment_preference_installment_citi_key" translatable="false">installment_citi</string>
+    <string name="payment_preference_installment_scb_wlb_key" translatable="false">installment_wlb_scb</string>
     <string name="payment_preference_installment_ttb_key" translatable="false">installment_ttb</string>
+    <string name="payment_preference_installment_ttb_wlb_key" translatable="false">installment_wlb_ttb</string>
     <string name="payment_preference_installment_uob_key" translatable="false">installment_uob</string>
+    <string name="payment_preference_installment_uob_wlb_key" translatable="false">installment_wlb_uob</string>
     <string name="payment_preference_dana_key" translatable="false">dana</string>
     <string name="payment_preference_econtext_key" translatable="false">econtext</string>
     <string name="payment_preference_fpx_key" translatable="false">fpx</string>
@@ -46,9 +53,9 @@
     <string name="payment_preference_kakaopay_key" translatable="false">kakaopay</string>
     <string name="payment_preference_paynow_key" translatable="false">paynow</string>
     <string name="payment_preference_promptpay_key" translatable="false">promptpay</string>
-    <string name="payment_preference_points_citi_key" translatable="false">points_citi</string>
     <string name="payment_preference_touch_n_go_key" translatable="false">touch_n_go</string>
     <string name="payment_preference_truemoney_key" translatable="false">truemoney</string>
+    <string name="payment_preference_truemoney_jumpapp_key" translatable="false">truemoney_jumpapp</string>
     <string name="payment_preference_googlepay_key" translatable="false">googlepay</string>
     <string name="payment_preference_rabbit_linepay_key" translatable="false">rabbit_linepay</string>
     <string name="payment_preference_boost_key" translatable="false">boost</string>
@@ -59,6 +66,7 @@
     <string name="payment_preference_grabpay_key" translatable="false">grabpay</string>
     <string name="payment_preference_paypay_key" translatable="false">paypay</string>
     <string name="payment_preference_atome_key" translatable="false">atome</string>
+    <string name="payment_preference_wechat_pay_key" translatable="false">wechat_pay</string>
 
     <string name="payment_preference_payment_methods_category_title" translatable="false">Payment methods</string>
     <string name="payment_preference_is_use_capability_api_title" translatable="false">Use Capability API</string>
@@ -72,23 +80,29 @@
     <string name="payment_preference_mobile_banking_scb_title" translatable="false">SCB - Mobile Banking</string>
     <string name="payment_preference_mobile_banking_kbank_title" translatable="false">KBANK - Mobile Banking</string>
     <string name="payment_preference_mobile_banking_ktb_title" translatable="false">KTB - Mobile Banking</string>
-    <string name="payment_preference_mobile_banking_ocbc_pao_title" translatable="false">OCBC Pay Anyone</string>
-    <string name="payment_preference_internet_banking_bay_title" translatable="false">BAY - Internet Banking</string>
-    <string name="payment_preference_internet_banking_bbl_title" translatable="false">BBL - Internet Banking</string>
+    <string name="payment_preference_ocbc_digital_title" translatable="false">OCBC Digital</string>
+
     <string name="payment_preference_alipay_title" translatable="false">Alipay Online</string>
     <string name="payment_preference_alipay_cn_title" translatable="false">AlipayCN</string>
     <string name="payment_preference_alipay_hk_title" translatable="false">AlipayHK</string>
     <string name="payment_preference_bill_payment_tesco_lotus_title" translatable="false">Lotus\'s Bill Payment</string>
     <string name="payment_preference_installment_bay_title" translatable="false">Krungsri - Installment</string>
+    <string name="payment_preference_installment_bay_wlb_title" translatable="false">Krungsri - Whitelabel Installment</string>
     <string name="payment_preference_installment_first_choice_title" translatable="false">First Choice - Installment</string>
+    <string name="payment_preference_installment_first_choice_wlb_title" translatable="false">First Choice - Whitelabel Installment</string>
     <string name="payment_preference_installment_bbl_title" translatable="false">BBL - Installment</string>
+    <string name="payment_preference_installment_bbl_wlb_title" translatable="false">BBL - Whitelabel Installment</string>
     <string name="payment_preference_installment_mbb_title" translatable="false">Maybank - Installment</string>
     <string name="payment_preference_installment_ktc_title" translatable="false">KTC - Installment</string>
+    <string name="payment_preference_installment_ktc_wlb_title" translatable="false">KTC - Whitelabel Installment</string>
     <string name="payment_preference_installment_kbank_title" translatable="false">Kasikorn - Installment</string>
+    <string name="payment_preference_installment_kbank_wlb_title" translatable="false">Kasikorn - Whitelabel Installment</string>
     <string name="payment_preference_installment_scb_title" translatable="false">Siam Commercial - Installment</string>
-    <string name="payment_preference_installment_citi_title" translatable="false">Citi - Installment</string>
+    <string name="payment_preference_installment_scb_wlb_title" translatable="false">Siam Commercial - Whitelabel Installment</string>
     <string name="payment_preference_installment_ttb_title" translatable="false">TMBThanachart - Installment</string>
+    <string name="payment_preference_installment_ttb_wlb_title" translatable="false">TMBThanachart - Whitelabel Installment</string>
     <string name="payment_preference_installment_uob_title" translatable="false">UOB - Installment</string>
+    <string name="payment_preference_installment_uob_wlb_title" translatable="false">UOB - Whitelabel Installment</string>
     <string name="payment_preference_dana_title" translatable="false">DANA</string>
     <string name="payment_preference_econtext_title" translatable="false">econtext</string>
     <string name="payment_preference_fpx_title" translatable="false">FPX</string>
@@ -96,10 +110,10 @@
     <string name="payment_preference_kakaopay_title" translatable="false">Kakao Pay</string>
     <string name="payment_preference_paynow_title" translatable="false">PayNow</string>
     <string name="payment_preference_promptpay_title" translatable="false">PromptPay</string>
-    <string name="payment_preference_points_citi_title" translatable="false">Pay with Citi Reward Points</string>
-    <string name="payment_preference_rabbit_linepay_title" translatable="false">Rabbit LINE Pay</string>
+    <string name="payment_preference_rabbit_linepay_title" translatable="false">LINE Pay</string>
     <string name="payment_preference_touch_n_go_title" translatable="false">Touch \'n Go eWallet</string>
     <string name="payment_preference_truemoney_title" translatable="false">TrueMoney Wallet</string>
+    <string name="payment_preference_truemoney_jumpapp_title" translatable="false">TrueMoney</string>
     <string name="payment_preference_googlepay_title" translatable="false">Google Pay</string>
     <string name="payment_preference_boost_title" translatable="false">Boost</string>
     <string name="payment_preference_shopeepay_title" translatable="false">ShopeePay</string>
@@ -109,6 +123,7 @@
     <string name="payment_preference_grabpay_title" translatable="false">GrabPay</string>
     <string name="payment_preference_paypay_title" translatable="false">PayPay</string>
     <string name="payment_preference_atome_title" translatable="false">Atome</string>
+    <string name="payment_preference_wechat_pay_title" translatable="false">WeChat Pay</string>
     <string name="payment_success_but_no_result" translatable="false">Payment success but no result.</string>
     <string name="error_capability_have_not_set_yet" translatable="false">Capability have not set yet.</string>
     <string name="payment_preference_zero_interest_installments_title" translatable="false">Zero interest installments</string>

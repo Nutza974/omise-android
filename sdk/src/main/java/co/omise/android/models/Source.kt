@@ -3,8 +3,8 @@ package co.omise.android.models
 import co.omise.android.api.Endpoint
 import co.omise.android.api.RequestBuilder
 import com.fasterxml.jackson.annotation.JsonProperty
-import kotlinx.android.parcel.Parcelize
-import kotlinx.android.parcel.TypeParceler
+import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.TypeParceler
 import okhttp3.HttpUrl
 import okhttp3.RequestBody
 import org.joda.time.DateTime
@@ -20,60 +20,58 @@ import java.io.IOException
 @TypeParceler<FlowType, FlowTypeParceler>()
 @TypeParceler<ChargeStatus, ChargeStatusParceler>()
 data class Source(
-        val type: SourceType = SourceType.Unknown(null),
-        val flow: FlowType = FlowType.Unknown(null),
-        val amount: Long = 0,
-        val currency: String? = null,
-        val barcode: String? = null,
-        val references: References? = null,
-        @field:JsonProperty("store_id")
-        val storeId: String? = null,
-        @field:JsonProperty("store_name")
-        val storeName: String? = null,
-        @field:JsonProperty("terminal_id")
-        val terminalId: String? = null,
-        val name: String? = null,
-        val email: String? = null,
-        val bank: String? = null,
-        @field:JsonProperty("platform_type")
-        val platformType: String? = null,
-        @field:JsonProperty("phone_number")
-        val phoneNumber: String? = null,
-        @field:JsonProperty("mobile_number")
-        val mobileNumber: String? = null,
-        @field:JsonProperty("shipping")
-        val shipping: Shipping? = null,
-        @field:JsonProperty("billing")
-        val billing: Billing? = null,
-        @field:JsonProperty("items")
-        val items: ArrayList<Item>? = ArrayList(),
-        @field:JsonProperty("installment_term")
-        val installmentTerm: Int? = null,
-        @field:JsonProperty("scannable_code")
-        val scannableCode: Barcode? = null,
-        @field:JsonProperty("zero_interest_installments")
-        val zeroInterestInstallments: Boolean? = null,
-        @field:JsonProperty("charge_status")
-        val chargeStatus: ChargeStatus = ChargeStatus.Unknown,
-        override var modelObject: String? = null,
-        override var id: String? = null,
-        override var livemode: Boolean = false,
-        override var location: String? = null,
-        override var created: DateTime? = null,
-        override var deleted: Boolean = false
+    val type: SourceType = SourceType.Unknown(null),
+    val flow: FlowType = FlowType.Unknown(null),
+    val amount: Long = 0,
+    val currency: String? = null,
+    val barcode: String? = null,
+    val references: References? = null,
+    @field:JsonProperty("store_id")
+    val storeId: String? = null,
+    @field:JsonProperty("store_name")
+    val storeName: String? = null,
+    @field:JsonProperty("terminal_id")
+    val terminalId: String? = null,
+    val name: String? = null,
+    val email: String? = null,
+    val bank: String? = null,
+    @field:JsonProperty("platform_type")
+    val platformType: String? = null,
+    @field:JsonProperty("phone_number")
+    val phoneNumber: String? = null,
+    @field:JsonProperty("mobile_number")
+    val mobileNumber: String? = null,
+    @field:JsonProperty("shipping")
+    val shipping: Shipping? = null,
+    @field:JsonProperty("billing")
+    val billing: Billing? = null,
+    @field:JsonProperty("items")
+    val items: ArrayList<Item>? = ArrayList(),
+    @field:JsonProperty("installment_term")
+    val installmentTerm: Int? = null,
+    @field:JsonProperty("scannable_code")
+    val scannableCode: Barcode? = null,
+    @field:JsonProperty("zero_interest_installments")
+    val zeroInterestInstallments: Boolean? = null,
+    @field:JsonProperty("charge_status")
+    val chargeStatus: ChargeStatus = ChargeStatus.Unknown,
+    override var modelObject: String? = null,
+    override var id: String? = null,
+    override var livemode: Boolean = false,
+    override var location: String? = null,
+    override var created: DateTime? = null,
+    override var deleted: Boolean = false,
 ) : Model {
-
     /**
      * The [RequestBuilder] class for creating a Source.
      */
     class CreateSourceRequestBuilder(
-            @JsonProperty
-            val amount: Long,
-            @JsonProperty
-            val currency: String,
-            val type: SourceType
+        @JsonProperty
+        val amount: Long,
+        @JsonProperty
+        val currency: String,
+        val type: SourceType,
     ) : RequestBuilder<Source>() {
-
         @JsonProperty
         private var description: String? = null
 
@@ -128,7 +126,7 @@ data class Source(
         }
 
         @Throws(IOException::class)
-        override fun payload(): RequestBody? {
+        override fun payload(): RequestBody {
             return serialize()
         }
 
@@ -196,7 +194,7 @@ data class Source(
             return this
         }
 
-        fun items(items: List<Item>): CreateSourceRequestBuilder{
+        fun items(items: List<Item>): CreateSourceRequestBuilder {
             this.items = items
             return this
         }

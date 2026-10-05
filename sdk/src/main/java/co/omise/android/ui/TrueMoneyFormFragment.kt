@@ -7,11 +7,11 @@ import android.view.View.INVISIBLE
 import android.view.ViewGroup
 import android.widget.Button
 import co.omise.android.R
+import co.omise.android.databinding.FragmentTrueMoneyFormBinding
 import co.omise.android.extensions.setOnAfterTextChangeListener
 import co.omise.android.extensions.setOnClickListener
 import co.omise.android.models.Source
 import co.omise.android.models.SourceType
-import kotlinx.android.synthetic.main.fragment_true_money_form.*
 
 /**
  * TrueMoneyFormFragment is the UI class for handling TrueMoney payment method.
@@ -19,19 +19,32 @@ import kotlinx.android.synthetic.main.fragment_true_money_form.*
 class TrueMoneyFormFragment : OmiseFragment() {
     var requester: PaymentCreatorRequester<Source>? = null
 
-    private val phoneNumberEdit: OmiseEditText by lazy { edit_phone_number }
-    private val phoneNumberErrorText by lazy { text_phone_number_error }
-    private val submitButton: Button by lazy { button_submit }
+    private var _binding: FragmentTrueMoneyFormBinding? = null
+    private val binding get() = _binding!!
+
+    private val phoneNumberEdit: OmiseEditText get() = binding.editPhoneNumber
+    private val phoneNumberErrorText get() = binding.textPhoneNumberError
+    private val submitButton: Button get() = binding.buttonSubmit
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_true_money_form, container, false)
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View {
+        _binding = FragmentTrueMoneyFormBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
 
         title = getString(R.string.payment_truemoney_title)
         setHasOptionsMenu(true)
@@ -67,13 +80,14 @@ class TrueMoneyFormFragment : OmiseFragment() {
 
         val phoneNumber = phoneNumberEdit.text?.toString()?.trim().orEmpty()
 
-        val request = Source.CreateSourceRequestBuilder(
-            requester.amount,
-            requester.currency,
-            SourceType.TrueMoney
-        )
-            .phoneNumber(phoneNumber)
-            .build()
+        val request =
+            Source.CreateSourceRequestBuilder(
+                requester.amount,
+                requester.currency,
+                SourceType.TrueMoney,
+            )
+                .phoneNumber(phoneNumber)
+                .build()
 
         view?.let { setAllViewsEnabled(it, false) }
         requester.request(request) {

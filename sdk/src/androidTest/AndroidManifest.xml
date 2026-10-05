@@ -1,20 +1,22 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="co.omise.android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application>
         <activity
-            android:name=".ui.AuthorizingPaymentActivity"
+            android:name="co.omise.android.ui.AuthorizingPaymentActivity"
             android:theme="@style/OmiseTheme" />
         <activity
-            android:name=".ui.CreditCardActivity"
+            android:name="co.omise.android.ui.CreditCardActivity"
             android:theme="@style/OmiseTheme" />
         <activity
-            android:name=".ui.PaymentCreatorActivity"
+            android:name="co.omise.android.ui.GooglePayActivity"
             android:theme="@style/OmiseTheme" />
         <activity
-            android:name=".ui.TestFragmentActivity"
+            android:name="co.omise.android.ui.PaymentCreatorActivity"
+            android:theme="@style/OmiseTheme" />
+        <activity
+            android:name="co.omise.android.ui.TestFragmentActivity"
             android:theme="@style/OmiseTheme" />
     </application>
 </manifest>

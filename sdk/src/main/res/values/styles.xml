@@ -58,4 +58,11 @@
     <style name="OmiseItemTextAppearance" parent="TextAppearance.AppCompat.Body1">
         <item name="android:textSize">@dimen/list_item_text_size</item>
     </style>
+
+    <style name="OmiseFullScreenDialogTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="colorControlNormal">@android:color/black</item>
+    </style>
 </resources>
